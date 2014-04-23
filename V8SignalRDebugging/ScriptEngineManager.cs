@@ -1,13 +1,13 @@
 ﻿namespace V8SignalRDebugging
 {
-    using System;
-    using System.Threading;
-    using System.Threading.Tasks;
+    using BaristaJS.AppEngine.Debugger;
     using Microsoft.AspNet.SignalR;
     using Microsoft.AspNet.SignalR.Hubs;
     using Microsoft.ClearScript.V8;
-    using BaristaJS.AppEngine.Debugger;
     using Newtonsoft.Json.Linq;
+    using System;
+    using System.Collections.Concurrent;
+    using System.Threading.Tasks;
     using V8SignalRDebugging.Debugger;
 
     public class ScriptEngineManager
@@ -47,37 +47,20 @@
         private readonly V8ScriptEngine m_scriptEngine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging, 5858);
         private DebuggerConnection m_debuggerConnection;
         private DebuggerClient m_debuggerClient;
+        private ConcurrentDictionary<string, string> m_connectionTokens = new ConcurrentDictionary<string, string>();
 
-        public async Task<int> SetBreakpoint(int lineNumber, int? column = null, bool enabled = true, string condition = null, int? ignoreCount = null)
+        public async Task<Response> Backtrace(string connectionId)
         {
-            if (lineNumber < 1)
-                throw new ArgumentOutOfRangeException("lineNumber");
+            var backtrace = new Request("backtrace");
+            var backtraceResponse = await m_debuggerClient.SendRequestAsync(backtrace);
 
-            var breakPointRequest = new Request("setbreakpoint");
+            return backtraceResponse;
+        }
 
-            //TODO: Set these two 
-            breakPointRequest.Arguments.type = "script";
-            breakPointRequest.Arguments.target = "asdf.js [temp]";
-
-            breakPointRequest.Arguments.line = lineNumber;
-
-            if (column.HasValue && column > 0)
-                breakPointRequest.Arguments.column = column.Value;
-
-            if (enabled == false)
-                breakPointRequest.Arguments.enabled = false;
-
-            if (String.IsNullOrWhiteSpace(condition) == false)
-                breakPointRequest.Arguments.condition = condition;
-
-            if (ignoreCount.HasValue && ignoreCount > 0)
-                breakPointRequest.Arguments.ignoreCount = ignoreCount.Value;
-
-            var breakPointResponse = await m_debuggerClient.SendRequestAsync(breakPointRequest);
-
-            return breakPointResponse.Success
-                ? breakPointResponse.Body.breakpoint
-                : 0;
+        public async Task<int> SetBreakpoint(string connectionId, Breakpoint breakpoint)
+        {
+            var response = await SetBreakpointInternal(connectionId, breakpoint);
+            return response.Body.breakpoint;
         }
 
         public async Task Continue(StepAction stepAction = StepAction.Next, int? stepCount = null)
@@ -93,24 +76,67 @@
             var continueResponse = await m_debuggerClient.SendRequestAsync(continueRequest);
         }
 
-        public async Task<object> Evaluate(string expression)
+        public async Task<Response> EvalImmediate(string expression)
         {
-            return m_scriptEngine.Evaluate("asdf.js", expression);
-
-            //return m_scriptEngine.Evaluate(script);
-
-/*
             var evaluateRequest = new Request("evaluate");
             evaluateRequest.Arguments.expression = expression;
-            //evaluateRequest.Arguments.frame = 1;
-            evaluateRequest.Arguments.global = true;
+            evaluateRequest.Arguments.frame = 0;
+            //evaluateRequest.Arguments.global = true;
             evaluateRequest.Arguments.disable_break = false;
-            evaluateRequest.Arguments.additional_context = new JArray();*/
+            evaluateRequest.Arguments.additional_context = new JArray();
 
-            //var evalResponse = await m_debuggerClient.SendRequestAsync(evaluateRequest);
+            var evalResponse = await m_debuggerClient.SendRequestAsync(evaluateRequest);
 
-            //Console.WriteLine(evalResponse);
-            //return evalResponse;
+            return evalResponse;
+        }
+
+        public object Evaluate(string connectionId, string expression)
+        {
+            var scriptName = GetCurrentScriptTargetName(connectionId);
+            var result = m_scriptEngine.Evaluate(scriptName, true, expression);
+            ResetConnectionToken(connectionId);
+            return result;
+        }
+
+        private string GetCurrentScriptTargetName(string connectionId)
+        {
+            return connectionId + "_" + GetConnectionToken(connectionId) + ".js";
+        }
+
+        private string GetConnectionToken(string connectionId)
+        {
+            return m_connectionTokens.GetOrAdd(connectionId, id => TokenGenerator.GetUniqueKey(10));
+        }
+
+        private string ResetConnectionToken(string connectionId)
+        {
+            return m_connectionTokens.AddOrUpdate(connectionId, id => TokenGenerator.GetUniqueKey(10), (id, currentToken) => TokenGenerator.GetUniqueKey(10));
+        }
+
+        private async Task<Response> SetBreakpointInternal(string connectionId, Breakpoint breakpoint)
+        {
+            var breakPointRequest = new Request("setbreakpoint");
+
+            //TODO: Set these two 
+            breakPointRequest.Arguments.type = "script";
+            breakPointRequest.Arguments.target = GetCurrentScriptTargetName(connectionId) + " [temp]";
+
+            breakPointRequest.Arguments.line = breakpoint.LineNumber;
+
+            if (breakpoint.Column.HasValue && breakpoint.Column > 0)
+                breakPointRequest.Arguments.column = breakpoint.Column.Value;
+
+            if (breakpoint.Enabled == false)
+                breakPointRequest.Arguments.enabled = false;
+
+            if (String.IsNullOrWhiteSpace(breakpoint.Condition) == false)
+                breakPointRequest.Arguments.condition = breakpoint.Condition;
+
+            if (breakpoint.IgnoreCount.HasValue && breakpoint.IgnoreCount > 0)
+                breakPointRequest.Arguments.ignoreCount = breakpoint.IgnoreCount.Value;
+
+            var breakPointResponse = await m_debuggerClient.SendRequestAsync(breakPointRequest);
+            return breakPointResponse;
         }
 
         void m_debuggerClient_BreakpointEvent(object sender, BreakpointEventArgs e)

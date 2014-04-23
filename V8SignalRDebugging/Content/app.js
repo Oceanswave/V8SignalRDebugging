@@ -1,4 +1,4 @@
-﻿var v8SignalRApp = angular.module('v8-signalr', [])
+﻿var v8SignalRApp = angular.module('v8-signalr', ['ui.bootstrap'])
 .run(function() {
         jQuery.connection.hub.url = "http://localhost:8080/signalr";
 
@@ -13,6 +13,12 @@
     scriptEngineHub.client.addMessage = function (name, message) {
         $timeout(function() {
             $rootScope.$broadcast("scriptEngineHub.addMessage", name, message);
+        });
+    };
+
+    scriptEngineHub.client.backtrace = function (backtrace) {
+        $timeout(function () {
+            $rootScope.$broadcast("scriptEngineHub.backtrace", backtrace);
         });
     };
 
@@ -40,15 +46,39 @@
         });
     };
 
+    scriptEngineHub.client.evalImmediateResult = function (name, result) {
+        $timeout(function () {
+            $rootScope.$broadcast("scriptEngineHub.evalImmediateResult", name, result);
+        });
+    };
+
+    scriptEngineHub.client.codeUpdated = function (code) {
+        $timeout(function () {
+            $rootScope.$broadcast("scriptEngineHub.codeUpdated", code);
+        });
+    };
+
     return {
-        continueBreakpoint: function(stepAction, stepCount) {
-            scriptEngineHub.server.continueBreakpoint("Next", 1);
+        backtrace: function () {
+            scriptEngineHub.server.backtrace();
+        },
+        continueBreakpoint: function (stepAction, stepCount) {
+            if (angular.isUndefined(stepCount))
+                stepCount = 1;
+
+            scriptEngineHub.server.continueBreakpoint(stepAction, stepCount);
         },
         setBreakpoint: function(lineNumber, column, enabled, condition, ignoreCount) {
             scriptEngineHub.server.setBreakpoint(lineNumber);
         },
+        shareCode: function(code) {
+            scriptEngineHub.server.shareCode(code);
+        },
         eval: function (userName, code) {
             scriptEngineHub.server.eval(userName, code);
+        },
+        evalImmediate: function (expression) {
+            scriptEngineHub.server.evalImmediate(expression);
         },
         send: function (userName, message) {
             scriptEngineHub.server.send(userName, message);

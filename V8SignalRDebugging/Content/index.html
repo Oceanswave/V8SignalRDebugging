@@ -7,32 +7,56 @@
 <body data-ng-controller="IndexCtrl" style="padding: 15px;">
     <input type="text" data-ng-model="model.userName" placeholder="Username..." />
     <div class="clearfix">
-        <textarea data-ng-model="model.code" style="width: 100%"></textarea>
+        <textarea data-ng-model="model.code" style="width: 100%" data-ng-change="codeUpdated()"></textarea>
         <div class="pull-right">
             <div class="btn btn-primary" data-ng-click="eval()">Eval</div>
         </div>
     </div>
-    
-    <div class="clearfix">
-        Breakpoints:
-        <div data-ng-repeat="breakpoint in model.breakpoints">
-            {{breakpoint.lineNumber}}
+    <div data-ng-hide="model.isRunning">
+        <div class="clearfix">
+            Breakpoints:
+            <div data-ng-repeat="breakpoint in model.breakpoints">
+                {{breakpoint.lineNumber}}
+            </div>
+            <div>
+                New Breakpoint:
+                <input type="text" data-ng-model="model.newBreakpointLineNum" />
+                <div class="btn btn-primary" data-ng-click="setBreakpoint()">Set Breakpoint</div>
+            </div>
         </div>
-        <div>
-            New Breakpoint:
-            <input type="text" data-ng-model="model.newBreakpointLineNum" />
-            <div class="btn btn-primary" data-ng-click="setBreakpoint()">Set Breakpoint</div>
-        </div>
-        <div>
-            BreakPoint Status:<br />
-            {{model.currentBreakpoint}}
-            <div class="btn btn-default" data-ng-click="continueBreakpoint()">Continue</div>
+        <div style="padding-top: 15px;">
+            Result:<br />
+            <textarea data-ng-model="model.result" style="width: 100%"></textarea>
         </div>
     </div>
-
-    <div style="padding-top:15px;">
-        Result:<br/>
-        <textarea data-ng-model="model.result" style="width: 100%"></textarea>
+    <div data-ng-show="model.isRunning">
+        <div class="btn btn-default" data-ng-click="continueBreakpoint('Next')"><i class="glyphicon glyphicon-arrow-right"></i></div>
+        <div class="btn btn-default" data-ng-click="continueBreakpoint('In')"><i class="glyphicon glyphicon-save"></i></div>
+        <div class="btn btn-default" data-ng-click="continueBreakpoint('Out')"><i class="glyphicon glyphicon-open"></i></div>
+        <div data-tabset="">
+            <div data-tab="">
+                <div data-tab-heading="">
+                    <i class="glyphicon glyphicon-bell"></i> Breakpoints
+                </div>
+                {{model.currentBreakpoint}}
+            </div>
+            <div data-tab="">
+                <div data-tab-heading="">
+                    <i class="glyphicon glyphicon-list-alt"></i> Stacktrace
+                </div>
+                <div class="btn btn-default" data-ng-click="backtrace()"></div>
+                {{model.backtrace}}
+            </div>
+            <div data-tab="">
+                <div data-tab-heading="">
+                    <i class="glyphicon glyphicon-flash"></i> Immediate Window
+                </div>
+                <div data-ng-repeat="evalImmediateResult in model.evalImmediateResults">
+                    {{evalImmediateResult}}
+                </div>
+                <input type="text" data-ng-model="model.evalImmediateExpression" /><div class="btn btn-primary" data-ng-click="evalImmediate()"><i class="glyphicon glyphicon-play-circle"></i></div>
+            </div>
+        </div>
     </div>
 
     <!--Script references. -->
@@ -41,6 +65,7 @@
 
     <!-- AngularJS -->
     <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.16/angular.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.10.0/ui-bootstrap-tpls.min.js"></script>
 
     <script src="app.js"></script>
     <script src="IndexCtrl.js"></script>

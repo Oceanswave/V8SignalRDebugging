@@ -95,6 +95,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Debugger\Breakpoint.cs" />
     <Compile Include="Debugger\Messages\Event.cs" />
     <Compile Include="Debugger\Messages\Response.cs" />
     <Compile Include="Debugger\Messages\Request.cs" />
@@ -120,6 +121,7 @@
     <Compile Include="ScriptEngineManager.cs" />
     <Compile Include="SourceMap.cs" />
     <Compile Include="Startup.cs" />
+    <Compile Include="TokenGenerator.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
