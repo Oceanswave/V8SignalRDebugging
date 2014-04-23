@@ -16,9 +16,18 @@
         });
     };
 
+    scriptEngineHub.client.evalResult = function (name, result) {
+        $timeout(function () {
+            $rootScope.$broadcast("scriptEngineHub.evalResult", name, result);
+        });
+    };
+
     return {
+        eval: function (userName, code) {
+            scriptEngineHub.server.eval(userName, code);
+        },
         send: function (userName, message) {
             scriptEngineHub.server.send(userName, message);
         }
-    }
+    };
 }]);
