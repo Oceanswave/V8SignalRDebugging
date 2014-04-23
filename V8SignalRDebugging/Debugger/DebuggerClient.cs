@@ -145,8 +145,7 @@
                     var breakpointHandler = BreakpointEvent;
                     if (breakpointHandler != null)
                     {
-                        //var breakpointEvent = new BreakpointEvent(message);
-                        //breakpointHandler(this, new BreakpointEventArgs(breakpointEvent));
+                        breakpointHandler(this, new BreakpointEventArgs(eventResponse));
                     }
                     break;
 

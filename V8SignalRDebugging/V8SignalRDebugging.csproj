@@ -95,21 +95,22 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Debugger2\Messages\Event.cs" />
-    <Compile Include="Debugger2\Messages\Response.cs" />
-    <Compile Include="Debugger2\Messages\Request.cs" />
-    <Compile Include="Debugger2\AsyncProducerConsumerCollection.cs" />
-    <Compile Include="Debugger2\Events\BreakpointEventArgs.cs" />
-    <Compile Include="Debugger2\Events\CompileScriptEventArgs.cs" />
-    <Compile Include="Debugger2\DebuggerClient.cs" />
-    <Compile Include="Debugger2\DebuggerConnection.cs" />
-    <Compile Include="Debugger2\Events\ExceptionEventArgs.cs" />
-    <Compile Include="Debugger2\INetworkClient.cs" />
-    <Compile Include="Debugger2\Events\MessageEventArgs.cs" />
-    <Compile Include="Debugger2\TcpNetworkClient.cs" />
-    <Compile Include="Debugger2\WebSocketNetworkClient.cs" />
-    <Compile Include="Debugger2\WebSocketStream.cs" />
-    <Compile Include="Debugger2\Extensions.cs" />
+    <Compile Include="Debugger\Messages\Event.cs" />
+    <Compile Include="Debugger\Messages\Response.cs" />
+    <Compile Include="Debugger\Messages\Request.cs" />
+    <Compile Include="Debugger\AsyncProducerConsumerCollection.cs" />
+    <Compile Include="Debugger\Events\BreakpointEventArgs.cs" />
+    <Compile Include="Debugger\Events\CompileScriptEventArgs.cs" />
+    <Compile Include="Debugger\DebuggerClient.cs" />
+    <Compile Include="Debugger\DebuggerConnection.cs" />
+    <Compile Include="Debugger\Events\ExceptionEventArgs.cs" />
+    <Compile Include="Debugger\INetworkClient.cs" />
+    <Compile Include="Debugger\Events\MessageEventArgs.cs" />
+    <Compile Include="StepAction.cs" />
+    <Compile Include="Debugger\TcpNetworkClient.cs" />
+    <Compile Include="Debugger\WebSocketNetworkClient.cs" />
+    <Compile Include="Debugger\WebSocketStream.cs" />
+    <Compile Include="Debugger\Extensions.cs" />
     <Compile Include="JsonListener.cs" />
     <Compile Include="NodejsConstants.cs" />
     <Compile Include="ProcessOutput.cs" />

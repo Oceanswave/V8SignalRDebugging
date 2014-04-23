@@ -16,6 +16,24 @@
         });
     };
 
+    scriptEngineHub.client.breakpointHit = function (breakpoint) {
+        $timeout(function () {
+            $rootScope.$broadcast("scriptEngineHub.breakpointHit", breakpoint);
+        });
+    };
+
+    scriptEngineHub.client.breakpointSet = function (breakpoint) {
+        $timeout(function() {
+            $rootScope.$broadcast("scriptEngineHub.breakpointSet", breakpoint);
+        });
+    };
+
+    scriptEngineHub.client.breakpointContinue = function () {
+        $timeout(function() {
+            $rootScope.$broadcast("scriptEngineHub.breakpointContinue");
+        });
+    };
+
     scriptEngineHub.client.evalResult = function (name, result) {
         $timeout(function () {
             $rootScope.$broadcast("scriptEngineHub.evalResult", name, result);
@@ -23,6 +41,12 @@
     };
 
     return {
+        continueBreakpoint: function(stepAction, stepCount) {
+            scriptEngineHub.server.continueBreakpoint("Next", 1);
+        },
+        setBreakpoint: function(lineNumber, column, enabled, condition, ignoreCount) {
+            scriptEngineHub.server.setBreakpoint(lineNumber);
+        },
         eval: function (userName, code) {
             scriptEngineHub.server.eval(userName, code);
         },

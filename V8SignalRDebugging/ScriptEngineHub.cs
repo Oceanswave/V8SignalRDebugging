@@ -1,6 +1,7 @@
 ﻿namespace V8SignalRDebugging
 {
     using Microsoft.AspNet.SignalR;
+    using V8SignalRDebugging.Debugger;
 
     public class ScriptEngineHub : Hub
     {
@@ -8,9 +9,29 @@
 
         public ScriptEngineHub() : this(ScriptEngineManager.Instance) { }
 
-        public ScriptEngineHub(ScriptEngineManager scriptEngineManater)
+        public ScriptEngineHub(ScriptEngineManager scriptEngineManager)
         {
-            m_scriptEngineManager = scriptEngineManater;
+            m_scriptEngineManager = scriptEngineManager;
+        }
+
+        public async void SetBreakpoint(int lineNumber)
+        {
+            var breakpointNumber = await m_scriptEngineManager.SetBreakpoint(lineNumber);
+
+            Clients.All.breakpointSet(new {
+                id = breakpointNumber,
+                lineNumber = lineNumber,
+                /*column = column,
+                enabled = enabled,
+                condition = condition,
+                ignoreCount = ignoreCount*/
+            });
+        }
+
+        public async void ContinueBreakpoint(StepAction stepAction = StepAction.Next, int? stepCount = null)
+        {
+            await m_scriptEngineManager.Continue(stepAction, stepCount);
+            Clients.All.breakpointContinue(stepAction, stepCount);
         }
 
         public async void Eval(string name, string code)

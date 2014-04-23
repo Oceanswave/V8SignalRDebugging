@@ -8,6 +8,7 @@
     using Microsoft.ClearScript.V8;
     using BaristaJS.AppEngine.Debugger;
     using Newtonsoft.Json.Linq;
+    using V8SignalRDebugging.Debugger;
 
     public class ScriptEngineManager
     {
@@ -19,6 +20,14 @@
         {
             // TODO: Complete member initialization
             Clients = hubConnectionContext;
+
+             m_debuggerConnection = new DebuggerConnection("tcp://localhost:5858");
+             m_debuggerConnection.Connect();
+
+             m_debuggerClient = new DebuggerClient(m_debuggerConnection);
+            
+            m_debuggerClient.ExceptionEvent += debuggerClient_ExceptionEvent;
+            m_debuggerClient.BreakpointEvent += m_debuggerClient_BreakpointEvent;
         }
 
         public static ScriptEngineManager Instance
@@ -39,34 +48,55 @@
         private DebuggerConnection m_debuggerConnection;
         private DebuggerClient m_debuggerClient;
 
-        public async Task<object> Evaluate(string expression)
+        public async Task<int> SetBreakpoint(int lineNumber, int? column = null, bool enabled = true, string condition = null, int? ignoreCount = null)
         {
-            if (m_debuggerConnection == null)
-            {
-                m_debuggerConnection = new DebuggerConnection("tcp://localhost:5858");
-                m_debuggerConnection.Connect();
-            }
-
-            if (m_debuggerClient == null)
-            {
-                m_debuggerClient = new DebuggerClient(m_debuggerConnection);
-                var response = await m_debuggerClient.SendRequestAsync(new Request("version"));
-                Console.WriteLine(response);
-
-                m_debuggerClient.ExceptionEvent += debuggerClient_ExceptionEvent;
-                m_debuggerClient.BreakpointEvent += m_debuggerClient_BreakpointEvent;
-            }
-
-            //var script = m_scriptEngine.Compile("asdf.js", expression);
+            if (lineNumber < 1)
+                throw new ArgumentOutOfRangeException("lineNumber");
 
             var breakPointRequest = new Request("setbreakpoint");
+
+            //TODO: Set these two 
             breakPointRequest.Arguments.type = "script";
             breakPointRequest.Arguments.target = "asdf.js [temp]";
-            breakPointRequest.Arguments.line = 1;
-            var breakPointResponse = await m_debuggerClient.SendRequestAsync(breakPointRequest);
-            Console.WriteLine(breakPointResponse);
 
+            breakPointRequest.Arguments.line = lineNumber;
+
+            if (column.HasValue && column > 0)
+                breakPointRequest.Arguments.column = column.Value;
+
+            if (enabled == false)
+                breakPointRequest.Arguments.enabled = false;
+
+            if (String.IsNullOrWhiteSpace(condition) == false)
+                breakPointRequest.Arguments.condition = condition;
+
+            if (ignoreCount.HasValue && ignoreCount > 0)
+                breakPointRequest.Arguments.ignoreCount = ignoreCount.Value;
+
+            var breakPointResponse = await m_debuggerClient.SendRequestAsync(breakPointRequest);
+
+            return breakPointResponse.Success
+                ? breakPointResponse.Body.breakpoint
+                : 0;
+        }
+
+        public async Task Continue(StepAction stepAction = StepAction.Next, int? stepCount = null)
+        {
+            var continueRequest = new Request("continue");
+
+            //TODO: Set these two 
+            continueRequest.Arguments.stepaction = stepAction.ToString().ToLowerInvariant();
+
+            if (stepCount.HasValue && stepCount.Value > 1)
+                continueRequest.Arguments.stepCount = stepCount.Value;
+
+            var continueResponse = await m_debuggerClient.SendRequestAsync(continueRequest);
+        }
+
+        public async Task<object> Evaluate(string expression)
+        {
             return m_scriptEngine.Evaluate("asdf.js", expression);
+
             //return m_scriptEngine.Evaluate(script);
 
 /*
@@ -85,7 +115,7 @@
 
         void m_debuggerClient_BreakpointEvent(object sender, BreakpointEventArgs e)
         {
-            Clients.All.exception(e.BreakpointEvent);
+            Clients.All.breakpointHit(e.BreakpointEvent);
         }
 
         private void debuggerClient_ExceptionEvent(object sender, ExceptionEventArgs e)
