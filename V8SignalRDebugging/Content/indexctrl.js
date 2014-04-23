@@ -21,6 +21,10 @@
         scriptEngine.shareCode($scope.model.code);
     };
 
+    $scope.disconnect = function () {
+        scriptEngine.disconnect();
+    };
+
     $scope.eval = function () {
         $scope.model.isRunning = true;
         $scope.model.result = null;
@@ -70,8 +74,18 @@
     });
 
     $scope.$on("scriptEngineHub.evalImmediateResult", function (e, result) {
-        var stringResult = JSON.stringify(result, null, 4);
-        $scope.model.evalImmediateResults.push(stringResult);
+        if (result.success == true) {
+            if (result.body.type == "object") {
+                var stringResult = JSON.stringify(result.body, null, 4);
+                $scope.model.evalImmediateResults.push(stringResult);
+            } else {
+                $scope.model.evalImmediateResults.push(result.body.text);
+            }
+        }
+        else {
+            $scope.model.evalImmediateResults.push(result.message);
+        }
+        
     });
 
     $scope.$on("scriptEngineHub.codeUpdated", function (e, code) {

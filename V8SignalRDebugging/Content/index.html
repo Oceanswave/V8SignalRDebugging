@@ -30,6 +30,8 @@
         </div>
     </div>
     <div data-ng-show="model.isRunning">
+        <div class="btn btn-default" data-ng-click="disconnect()"><i class="glyphicon glyphicon glyphicon-play"></i></div>
+        <div class="btn btn-default" data-ng-click="interrupt()"><i class="glyphicon glyphicon glyphicon-stop"></i></div>
         <div class="btn btn-default" data-ng-click="continueBreakpoint('Next')"><i class="glyphicon glyphicon-arrow-right"></i></div>
         <div class="btn btn-default" data-ng-click="continueBreakpoint('In')"><i class="glyphicon glyphicon-save"></i></div>
         <div class="btn btn-default" data-ng-click="continueBreakpoint('Out')"><i class="glyphicon glyphicon-open"></i></div>

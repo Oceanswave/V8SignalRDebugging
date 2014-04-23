@@ -50,6 +50,13 @@
             Clients.Others.codeUpdated(code);
         }
 
+        public async Task Disconnect()
+        {
+            var result = await m_scriptEngineManager.Disconnect(Context.ConnectionId);
+
+            Clients.All.disconnected(result);
+        }
+
         public void Eval(string name, string code)
         {
             var result = m_scriptEngineManager.Evaluate(Context.ConnectionId, code);
@@ -61,7 +68,7 @@
         {
             var result = await m_scriptEngineManager.EvalImmediate(expression);
 
-            Clients.All.evalImmediateResult(result.Success ? result.Body.text : result.Message);
+            Clients.All.evalImmediateResult(result);
         }
 
         public void Send(string name, string message)

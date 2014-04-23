@@ -68,11 +68,8 @@
 
             scriptEngineHub.server.continueBreakpoint(stepAction, stepCount);
         },
-        setBreakpoint: function(lineNumber, column, enabled, condition, ignoreCount) {
-            scriptEngineHub.server.setBreakpoint(lineNumber);
-        },
-        shareCode: function(code) {
-            scriptEngineHub.server.shareCode(code);
+        disconnect: function() {
+            scriptEngineHub.server.disconnect();
         },
         eval: function (userName, code) {
             scriptEngineHub.server.eval(userName, code);
@@ -80,8 +77,14 @@
         evalImmediate: function (expression) {
             scriptEngineHub.server.evalImmediate(expression);
         },
+        shareCode: function (code) {
+            scriptEngineHub.server.shareCode(code);
+        },
         send: function (userName, message) {
             scriptEngineHub.server.send(userName, message);
+        },
+        setBreakpoint: function(lineNumber, column, enabled, condition, ignoreCount) {
+            scriptEngineHub.server.setBreakpoint(lineNumber);
         }
     };
 }]);

@@ -2,6 +2,7 @@
 {
     using BaristaJS.AppEngine.Debugger;
     using Microsoft.AspNet.SignalR;
+    using Microsoft.AspNet.SignalR.Hosting;
     using Microsoft.AspNet.SignalR.Hubs;
     using Microsoft.ClearScript.V8;
     using Newtonsoft.Json.Linq;
@@ -74,6 +75,14 @@
                 continueRequest.Arguments.stepCount = stepCount.Value;
 
             var continueResponse = await m_debuggerClient.SendRequestAsync(continueRequest);
+        }
+
+        public async Task<Response> Disconnect(string connectionId)
+        {
+            var disconnectRequest = new Request("disconnect");
+            var disconnectResponse = await m_debuggerClient.SendRequestAsync(disconnectRequest);
+
+            return disconnectResponse;
         }
 
         public async Task<Response> EvalImmediate(string expression)
