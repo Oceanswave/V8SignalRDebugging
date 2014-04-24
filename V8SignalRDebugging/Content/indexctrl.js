@@ -26,6 +26,7 @@
     };
 
     $scope.eval = function () {
+        store.set("code", $scope.model.code);
         $scope.model.isRunning = true;
         $scope.model.result = null;
         $scope.model.evalImmediateExpression = null;
@@ -96,4 +97,5 @@
         $scope.model.backtrace = backtrace;
     });
 
+    $scope.model.code = store.get("code");
 }]);
