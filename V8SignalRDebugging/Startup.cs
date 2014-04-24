@@ -20,6 +20,15 @@
                 FileSystem = new PhysicalFileSystem(path)
             });
             app.MapSignalR();
+            app.Map("", appBuilder => appBuilder.Run(context =>
+            {
+                context.Response.StatusCode = 302;
+                context.Response.Headers.Add("Location", new[]
+                {
+                    "/index.html"
+                });
+                return context.Response.WriteAsync("");
+            }));
         }
     }
 }
