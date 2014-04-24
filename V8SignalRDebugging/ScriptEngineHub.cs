@@ -2,7 +2,6 @@
 {
     using System.Threading.Tasks;
     using BaristaJS.AppEngine.Debugger;
-    using BaristaJS.AppEngine.Extensions;
     using Microsoft.AspNet.SignalR;
     using V8SignalRDebugging.Debugger;
 

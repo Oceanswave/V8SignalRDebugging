@@ -32,14 +32,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="BaristaJS.AppEngine.ClearScript">
-      <HintPath>..\Lib\BaristaJS.AppEngine.ClearScript.dll</HintPath>
-    </Reference>
-    <Reference Include="BaristaJS.AppEngine.Core">
-      <HintPath>..\Lib\BaristaJS.AppEngine.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="BaristaJS.ClearScript">
-      <HintPath>..\Lib\BaristaJS.ClearScript.dll</HintPath>
+    <Reference Include="ClearScript">
+      <HintPath>..\packages\ClearScript.V8.5.3.10.0\lib\ClearScript.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.AspNet.SignalR.Core">
       <HintPath>..\packages\Microsoft.AspNet.SignalR.Core.2.0.3\lib\net45\Microsoft.AspNet.SignalR.Core.dll</HintPath>
@@ -107,6 +101,7 @@
     <Compile Include="Debugger\Events\ExceptionEventArgs.cs" />
     <Compile Include="Debugger\INetworkClient.cs" />
     <Compile Include="Debugger\Events\MessageEventArgs.cs" />
+    <Compile Include="Extensions.cs" />
     <Compile Include="StepAction.cs" />
     <Compile Include="Debugger\TcpNetworkClient.cs" />
     <Compile Include="Debugger\WebSocketNetworkClient.cs" />
@@ -125,25 +120,35 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="Licenses\ClearScript.main.license" />
+    <None Include="Licenses\v8.main.license" />
+    <None Include="Licenses\v8.strongtalk.license" />
+    <None Include="Licenses\v8.v8.license" />
+    <None Include="Licenses\v8.valgrind.license" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="..\Lib\ClearScriptV8-64.dll">
-      <Link>ClearScriptV8-64.dll</Link>
+    <None Include="ClearScriptV8-64.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="..\Lib\v8-x64.dll">
-      <Link>v8-x64.dll</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    </None>
     <Content Include="Content\app.js" />
     <Content Include="Content\index.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Content\IndexCtrl.js" />
+    <None Include="v8-x64.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>
+if not exist "$(TargetDir)" md "$(TargetDir)"
+xcopy /s /y "$(SolutionDir)packages\ClearScript.V8.5.3.10.0\tools\native\x86\*.*" "$(TargetDir)"
+if not exist "$(TargetDir)" md "$(TargetDir)"
+xcopy /s /y "$(SolutionDir)packages\ClearScript.V8.5.3.10.0\tools\native\amd64\*.*" "$(TargetDir)"</PostBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
