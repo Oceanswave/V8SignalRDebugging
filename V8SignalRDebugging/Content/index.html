@@ -51,10 +51,10 @@
             </div>
             <div data-tab="">
                 <div data-tab-heading="">
-                    <i class="glyphicon glyphicon-flash"></i> Immediate Window
+                    <i class="glyphicon glyphicon-flash"></i> Console
                 </div>
-                <div data-ng-repeat="evalImmediateResult in model.evalImmediateResults">
-                    {{evalImmediateResult}}
+                <div data-ng-repeat="consoleMessage in model.consoleMessages">
+                    <span style="background-color: lightblue">{{consoleMessage.date | date:'M/d/yy hh:mm:ss'}}:</span>&nbsp;<strong>{{consoleMessage.message}}</strong>
                 </div>
                 <input type="text" data-ng-model="model.evalImmediateExpression" /><div class="btn btn-primary" data-ng-click="evalImmediate()"><i class="glyphicon glyphicon-play-circle"></i></div>
             </div>
@@ -66,8 +66,8 @@
     <script src="//ajax.aspnetcdn.com/ajax/signalr/jquery.signalr-2.0.2.min.js"></script>
 
     <!-- AngularJS -->
-    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.16/angular.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.10.0/ui-bootstrap-tpls.min.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.16/angular.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.10.0/ui-bootstrap-tpls.js"></script>
 
     <script src="app.js"></script>
     <script src="ScriptEngineService.js"></script>

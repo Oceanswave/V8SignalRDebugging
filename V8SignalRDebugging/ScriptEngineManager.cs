@@ -2,7 +2,6 @@
 {
     using BaristaJS.AppEngine.Debugger;
     using Microsoft.AspNet.SignalR;
-    using Microsoft.AspNet.SignalR.Hosting;
     using Microsoft.AspNet.SignalR.Hubs;
     using Microsoft.ClearScript.V8;
     using Newtonsoft.Json.Linq;
@@ -17,16 +16,27 @@
         private readonly static Lazy<ScriptEngineManager> m_instance = new Lazy<ScriptEngineManager>(() =>
             new ScriptEngineManager(GlobalHost.ConnectionManager.GetHubContext<ScriptEngineHub>().Clients));
 
+        private readonly V8ScriptEngine m_scriptEngine;
+        private readonly FirebugConsole m_console;
+        private DebuggerConnection m_debuggerConnection;
+        private readonly DebuggerClient m_debuggerClient;
+        private readonly ConcurrentDictionary<string, string> m_connectionTokens = new ConcurrentDictionary<string, string>();
+
         public ScriptEngineManager(IHubConnectionContext hubConnectionContext)
         {
             // TODO: Complete member initialization
             Clients = hubConnectionContext;
 
-             m_debuggerConnection = new DebuggerConnection("tcp://localhost:5858");
-             m_debuggerConnection.Connect();
+            m_scriptEngine = new V8ScriptEngine(V8ScriptEngineFlags.DisableGlobalMembers | V8ScriptEngineFlags.EnableDebugging, 5858);
+            m_scriptEngine.AllowReflection = false;
+            m_console = new FirebugConsole(hubConnectionContext);
+            m_scriptEngine.AddHostObject("console", m_console);
 
-             m_debuggerClient = new DebuggerClient(m_debuggerConnection);
-            
+            m_debuggerConnection = new DebuggerConnection("tcp://localhost:5858");
+            m_debuggerConnection.Connect();
+
+            m_debuggerClient = new DebuggerClient(m_debuggerConnection);
+
             m_debuggerClient.ExceptionEvent += debuggerClient_ExceptionEvent;
             m_debuggerClient.BreakpointEvent += m_debuggerClient_BreakpointEvent;
         }
@@ -45,10 +55,6 @@
             set;
         }
 
-        private readonly V8ScriptEngine m_scriptEngine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging, 5858);
-        private DebuggerConnection m_debuggerConnection;
-        private DebuggerClient m_debuggerClient;
-        private ConcurrentDictionary<string, string> m_connectionTokens = new ConcurrentDictionary<string, string>();
 
         public async Task<Response> Backtrace(string connectionId)
         {

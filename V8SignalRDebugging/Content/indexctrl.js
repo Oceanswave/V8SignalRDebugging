@@ -10,7 +10,7 @@
         newBreakpointLineNum: null,
         currentBreakpoint: null,
         evalImmediateExpression: null,
-        evalImmediateResults: []
+        consoleMessages: []
     };
 
     $scope.backtrace = function() {
@@ -29,7 +29,7 @@
         $scope.model.isRunning = true;
         $scope.model.result = null;
         $scope.model.evalImmediateExpression = null;
-        $scope.model.evalImmediateResults = [];
+        $scope.model.consoleMessages = [];
         scriptEngine.eval($scope.model.userName, $scope.model.code);
     };
 
@@ -73,17 +73,17 @@
         $scope.model.isRunning = false;
     });
 
-    $scope.$on("scriptEngineHub.evalImmediateResult", function (e, result) {
+    $scope.$on("scriptEngineHub.console", function (e, result) {
         if (result.success == true) {
             if (result.body.type == "object") {
                 var stringResult = JSON.stringify(result.body, null, 4);
-                $scope.model.evalImmediateResults.push(stringResult);
+                $scope.model.consoleMessages.push({ date: new Date(), message: stringResult });
             } else {
-                $scope.model.evalImmediateResults.push(result.body.text);
+                $scope.model.consoleMessages.push({ date: new Date(), message: result.body.text });
             }
         }
         else {
-            $scope.model.evalImmediateResults.push(result.message);
+            $scope.model.consoleMessages.push({ date: new Date(), message: result.message });
         }
         
     });

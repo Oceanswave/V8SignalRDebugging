@@ -67,7 +67,7 @@
         {
             var result = await m_scriptEngineManager.EvalImmediate(expression);
 
-            Clients.All.evalImmediateResult(result);
+            Clients.All.console(result);
         }
 
         public void Send(string name, string message)

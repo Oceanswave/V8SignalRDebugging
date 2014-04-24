@@ -38,9 +38,9 @@
         });
     };
 
-    scriptEngineHub.client.evalImmediateResult = function (name, result) {
+    scriptEngineHub.client.console = function (name, result) {
         $timeout(function () {
-            $rootScope.$broadcast("scriptEngineHub.evalImmediateResult", name, result);
+            $rootScope.$broadcast("scriptEngineHub.console", name, result);
         });
     };
 
