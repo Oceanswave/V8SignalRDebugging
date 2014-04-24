@@ -1,4 +1,4 @@
-﻿namespace BaristaJS.AppEngine.Debugger
+﻿namespace V8SignalRDebugging.Debugger
 {
     using System;
     using System.Collections.Concurrent;
@@ -8,6 +8,8 @@
     using System.Threading.Tasks;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
+    using V8SignalRDebugging.Debugger.Events;
+    using V8SignalRDebugging.Debugger.Messages;
 
     public sealed class DebuggerClient
     {

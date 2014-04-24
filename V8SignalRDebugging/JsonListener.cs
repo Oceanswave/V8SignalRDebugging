@@ -1,18 +1,4 @@
-﻿/* ****************************************************************************
- *
- * Copyright (c) Microsoft Corporation. 
- *
- * This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
- * copy of the license can be found in the License.html file at the root of this distribution. If 
- * you cannot locate the Apache License, Version 2.0, please send an email to 
- * vspython@microsoft.com. By using this source code in any fashion, you are agreeing to be bound 
- * by the terms of the Apache License, Version 2.0.
- *
- * You must not remove this notice, or any other, from this software.
- *
- * ***************************************************************************/
-
-namespace Microsoft.NodejsTools
+﻿namespace V8SignalRDebugging
 {
 
     using System;
@@ -42,8 +28,8 @@ namespace Microsoft.NodejsTools
 
         private void ListenerThread()
         {
-            int pos = 0;
-            byte[] text = new byte[0];
+            var pos = 0;
+            var text = new byte[0];
 
             // Use a local for Socket to keep nulling of _socket field (on non listener thread)
             // from causing spurious null dereferences
@@ -61,7 +47,7 @@ namespace Microsoft.NodejsTools
                             ReadMoreData(socket.Receive(m_socketBuffer), ref text, ref pos);
                         }
 
-                        Dictionary<string, string> headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                        var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                         while (m_socket != null && socket.Connected)
                         {
                             int newPos = text.FirstNewLine(pos);
@@ -85,28 +71,28 @@ namespace Microsoft.NodejsTools
                                 if (nameEnd != -1)
                                 {
                                     var headerName = text.Substring(pos, nameEnd - pos);
-                                    string headerNameStr = Encoding.UTF8.GetString(headerName).Trim();
+                                    var headerNameStr = Encoding.UTF8.GetString(headerName).Trim();
 
                                     var headerValue = text.Substring(nameEnd + 1, newPos - nameEnd - 1);
-                                    string headerValueStr = Encoding.UTF8.GetString(headerValue).Trim();
+                                    var headerValueStr = Encoding.UTF8.GetString(headerValue).Trim();
                                     headers[headerNameStr] = headerValueStr;
                                 }
                                 pos = newPos + 2;
                             }
                         }
 
-                        string body = "";
+                        var body = "";
                         string contentLen;
                         if (headers.TryGetValue("Content-Length", out contentLen))
                         {
-                            int lengthRemaining = Int32.Parse(contentLen);
+                            var lengthRemaining = Int32.Parse(contentLen);
                             if (lengthRemaining != 0)
                             {
-                                StringBuilder bodyBuilder = new StringBuilder();
+                                var bodyBuilder = new StringBuilder();
 
                                 while (m_socket != null && socket.Connected)
                                 {
-                                    int len = Math.Min(text.Length - pos, lengthRemaining);
+                                    var len = Math.Min(text.Length - pos, lengthRemaining);
                                     bodyBuilder.Append(Encoding.UTF8.GetString(text.Substring(pos, len)));
                                     pos += len;
 
@@ -157,7 +143,7 @@ namespace Microsoft.NodejsTools
 
         private void ReadMoreData(int bytesRead, ref byte[] text, ref int pos)
         {
-            byte[] combinedText = new byte[bytesRead + text.Length - pos];
+            var combinedText = new byte[bytesRead + text.Length - pos];
             Buffer.BlockCopy(text, pos, combinedText, 0, text.Length - pos);
             Buffer.BlockCopy(m_socketBuffer, 0, combinedText, text.Length - pos, bytesRead);
             text = combinedText;
@@ -181,7 +167,7 @@ namespace Microsoft.NodejsTools
     {
         public static int IndexOf(this byte[] bytes, byte ch, int start, int count)
         {
-            for (int i = start; i < start + count && i < bytes.Length; i++)
+            for (var i = start; i < start + count && i < bytes.Length; i++)
             {
                 if (bytes[i] == ch)
                 {
@@ -193,8 +179,8 @@ namespace Microsoft.NodejsTools
 
         public static byte[] Substring(this byte[] bytes, int start, int length)
         {
-            byte[] res = new byte[length];
-            for (int i = 0; i < length; i++)
+            var res = new byte[length];
+            for (var i = 0; i < length; i++)
             {
                 res[i] = bytes[i + start];
             }
@@ -203,7 +189,7 @@ namespace Microsoft.NodejsTools
 
         public static int FirstNewLine(this byte[] bytes, int start)
         {
-            for (int i = start; i < bytes.Length - 1; i++)
+            for (var i = start; i < bytes.Length - 1; i++)
             {
                 if (bytes[i] == '\r' && bytes[i + 1] == '\n')
                 {

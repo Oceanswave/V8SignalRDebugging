@@ -82,11 +82,7 @@
     <Reference Include="System.Web.Cors">
       <HintPath>..\packages\Microsoft.AspNet.Cors.5.0.0\lib\net45\System.Web.Cors.dll</HintPath>
     </Reference>
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="FirebugConsole.cs" />
@@ -109,13 +105,10 @@
     <Compile Include="Debugger\WebSocketStream.cs" />
     <Compile Include="Debugger\Extensions.cs" />
     <Compile Include="JsonListener.cs" />
-    <Compile Include="NodejsConstants.cs" />
-    <Compile Include="ProcessOutput.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ScriptEngineHub.cs" />
     <Compile Include="ScriptEngineManager.cs" />
-    <Compile Include="SourceMap.cs" />
     <Compile Include="Startup.cs" />
     <Compile Include="TokenGenerator.cs" />
   </ItemGroup>

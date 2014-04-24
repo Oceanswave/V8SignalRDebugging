@@ -1,4 +1,4 @@
-﻿namespace BaristaJS.AppEngine.Debugger
+﻿namespace V8SignalRDebugging.Debugger
 {
     using System;
     using System.IO;

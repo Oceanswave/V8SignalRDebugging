@@ -1,6 +1,5 @@
 ﻿namespace V8SignalRDebugging
 {
-    using BaristaJS.AppEngine.Debugger;
     using Microsoft.AspNet.SignalR;
     using Microsoft.AspNet.SignalR.Hubs;
     using Microsoft.ClearScript.V8;
@@ -9,11 +8,13 @@
     using System.Collections.Concurrent;
     using System.Threading.Tasks;
     using V8SignalRDebugging.Debugger;
+    using V8SignalRDebugging.Debugger.Events;
+    using V8SignalRDebugging.Debugger.Messages;
 
     public class ScriptEngineManager
     {
         // Singleton instance
-        private readonly static Lazy<ScriptEngineManager> m_instance = new Lazy<ScriptEngineManager>(() =>
+        private readonly static Lazy<ScriptEngineManager> ManagerInstance = new Lazy<ScriptEngineManager>(() =>
             new ScriptEngineManager(GlobalHost.ConnectionManager.GetHubContext<ScriptEngineHub>().Clients));
 
         private readonly V8ScriptEngine m_scriptEngine;
@@ -45,7 +46,7 @@
         {
             get
             {
-                return m_instance.Value;
+                return ManagerInstance.Value;
             }
         }
 
@@ -132,7 +133,6 @@
         {
             var breakPointRequest = new Request("setbreakpoint");
 
-            //TODO: Set these two 
             breakPointRequest.Arguments.type = "script";
             breakPointRequest.Arguments.target = GetCurrentScriptTargetName(connectionId) + " [temp]";
 

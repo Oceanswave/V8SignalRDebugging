@@ -1,7 +1,6 @@
 ﻿namespace V8SignalRDebugging
 {
     using System.Threading.Tasks;
-    using BaristaJS.AppEngine.Debugger;
     using Microsoft.AspNet.SignalR;
     using V8SignalRDebugging.Debugger;
 
@@ -28,7 +27,7 @@
             await m_scriptEngineManager.SetBreakpoint(Context.ConnectionId, new Breakpoint { LineNumber = lineNumber });
 
             Clients.All.breakpointSet(new {
-                lineNumber = lineNumber,
+                lineNumber,
                 /*column = column,
                 enabled = enabled,
                 condition = condition,
@@ -68,12 +67,6 @@
             var result = await m_scriptEngineManager.EvalImmediate(expression);
 
             Clients.All.console(result);
-        }
-
-        public void Send(string name, string message)
-        {
-            // Call the broadcastMessage method to update clients.
-            Clients.All.addMessage(name, message);
         }
     }
 }
