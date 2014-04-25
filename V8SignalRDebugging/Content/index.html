@@ -49,11 +49,15 @@
         </div>
     </div>
     <div data-ng-show="model.isRunning">
-        <div class="btn btn-default" data-ng-click="disconnect()"><i class="glyphicon glyphicon glyphicon-play"></i></div>
-        <div class="btn btn-default" data-ng-click="interrupt()"><i class="glyphicon glyphicon glyphicon-stop"></i></div>
-        <div class="btn btn-default" data-ng-click="continueBreakpoint('Next')"><i class="glyphicon glyphicon-arrow-right"></i></div>
-        <div class="btn btn-default" data-ng-click="continueBreakpoint('In')"><i class="glyphicon glyphicon-save"></i></div>
-        <div class="btn btn-default" data-ng-click="continueBreakpoint('Out')"><i class="glyphicon glyphicon-open"></i></div>
+        <div class="btn btn-group">
+            <div class="btn btn-default" data-ng-click="disconnect()"><i class="glyphicon glyphicon glyphicon-play"></i></div>
+            <div class="btn btn-default" data-ng-click="interrupt()"><i class="glyphicon glyphicon glyphicon-stop"></i></div>
+        </div>
+        <div class="btn btn-group">
+            <div class="btn btn-default" data-ng-click="continueBreakpoint('Next')"><i class="glyphicon glyphicon-arrow-right"></i></div>
+            <div class="btn btn-default" data-ng-click="continueBreakpoint('In')"><i class="glyphicon glyphicon-save"></i></div>
+            <div class="btn btn-default" data-ng-click="continueBreakpoint('Out')"><i class="glyphicon glyphicon-open"></i></div>
+        </div>
         <div data-tabset="">
             <div data-tab="">
                 <div data-tab-heading="">
@@ -72,9 +76,10 @@
                 <div data-tab-heading="">
                     <i class="glyphicon glyphicon-flash"></i> Console
                 </div>
-                <div data-ng-repeat="consoleMessage in model.consoleMessages">
-                    <span style="background-color: lightblue">{{consoleMessage.date | date:'M/d/yy hh:mm:ss'}}:</span>&nbsp;<strong>{{consoleMessage.message}}</strong>
-                </div>
+                <dl class="dl-horizontal">
+                    <dt data-ng-repeat-start="consoleMessage in model.consoleMessages">{{consoleMessage.date | date:'M/d/yy hh:mm:ss'}}</dt>
+                    <dd data-ng-repeat-end="">{{consoleMessage.message}}</dd>
+                </dl>
                 <input type="text" data-ng-model="model.evalImmediateExpression" /><div class="btn btn-primary" data-ng-click="evalImmediate()"><i class="glyphicon glyphicon-play-circle"></i></div>
             </div>
         </div>
