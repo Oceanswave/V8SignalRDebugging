@@ -99,6 +99,7 @@
     <Compile Include="Debugger\INetworkClient.cs" />
     <Compile Include="Debugger\Events\MessageEventArgs.cs" />
     <Compile Include="Extensions.cs" />
+    <Compile Include="PortUtility.cs" />
     <Compile Include="StepAction.cs" />
     <Compile Include="Debugger\TcpNetworkClient.cs" />
     <Compile Include="Debugger\WebSocketNetworkClient.cs" />
@@ -111,6 +112,7 @@
     <Compile Include="ScriptEngineManager.cs" />
     <Compile Include="Startup.cs" />
     <Compile Include="TokenGenerator.cs" />
+    <Compile Include="V8DebugScriptEngine.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

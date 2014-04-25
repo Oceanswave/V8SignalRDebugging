@@ -2,6 +2,7 @@
 {
     using Microsoft.AspNet.SignalR;
     using Microsoft.AspNet.SignalR.Hubs;
+    using Microsoft.ClearScript;
     using Microsoft.ClearScript.V8;
     using Newtonsoft.Json.Linq;
     using System;
@@ -17,29 +18,14 @@
         private readonly static Lazy<ScriptEngineManager> ManagerInstance = new Lazy<ScriptEngineManager>(() =>
             new ScriptEngineManager(GlobalHost.ConnectionManager.GetHubContext<ScriptEngineHub>().Clients));
 
-        private readonly V8ScriptEngine m_scriptEngine;
-        private readonly FirebugConsole m_console;
-        private DebuggerConnection m_debuggerConnection;
-        private readonly DebuggerClient m_debuggerClient;
-        private readonly ConcurrentDictionary<string, string> m_connectionTokens = new ConcurrentDictionary<string, string>();
+        private readonly ConcurrentDictionary<string, V8DebugScriptEngine> m_connectionScriptEngines =
+            new ConcurrentDictionary<string, V8DebugScriptEngine>();
 
         public ScriptEngineManager(IHubConnectionContext hubConnectionContext)
         {
             // TODO: Complete member initialization
             Clients = hubConnectionContext;
-
-            m_scriptEngine = new V8ScriptEngine(V8ScriptEngineFlags.DisableGlobalMembers | V8ScriptEngineFlags.EnableDebugging, 5858);
-            m_scriptEngine.AllowReflection = false;
-            m_console = new FirebugConsole(hubConnectionContext);
-            m_scriptEngine.AddHostObject("console", m_console);
-
-            m_debuggerConnection = new DebuggerConnection("tcp://localhost:5858");
-            m_debuggerConnection.Connect();
-
-            m_debuggerClient = new DebuggerClient(m_debuggerConnection);
-
-            m_debuggerClient.ExceptionEvent += debuggerClient_ExceptionEvent;
-            m_debuggerClient.BreakpointEvent += m_debuggerClient_BreakpointEvent;
+            
         }
 
         public static ScriptEngineManager Instance
@@ -59,108 +45,82 @@
 
         public async Task<Response> Backtrace(string connectionId)
         {
-            var backtrace = new Request("backtrace");
-            var backtraceResponse = await m_debuggerClient.SendRequestAsync(backtrace);
-
-            return backtraceResponse;
+            var scriptEngine = GetScriptEngineForConnection(connectionId);
+            var response = await scriptEngine.Backtrace();
+            return response;
         }
 
-        public async Task<int> SetBreakpoint(string connectionId, Breakpoint breakpoint)
+        public async Task<Response> Continue(string connectionId, StepAction stepAction = StepAction.Next, int? stepCount = null)
         {
-            var response = await SetBreakpointInternal(connectionId, breakpoint);
-            return response.Body.breakpoint;
-        }
-
-        public async Task Continue(StepAction stepAction = StepAction.Next, int? stepCount = null)
-        {
-            var continueRequest = new Request("continue");
-
-            //TODO: Set these two 
-            continueRequest.Arguments.stepaction = stepAction.ToString().ToLowerInvariant();
-
-            if (stepCount.HasValue && stepCount.Value > 1)
-                continueRequest.Arguments.stepCount = stepCount.Value;
-
-            var continueResponse = await m_debuggerClient.SendRequestAsync(continueRequest);
+            var scriptEngine = GetScriptEngineForConnection(connectionId);
+            var response = await scriptEngine.Continue(stepAction, stepCount);
+            return response;
         }
 
         public async Task<Response> Disconnect(string connectionId)
         {
-            var disconnectRequest = new Request("disconnect");
-            var disconnectResponse = await m_debuggerClient.SendRequestAsync(disconnectRequest);
-
-            return disconnectResponse;
+            var scriptEngine = GetScriptEngineForConnection(connectionId);
+            var response = await scriptEngine.Disconnect();
+            return response;
         }
 
-        public async Task<Response> EvalImmediate(string expression)
+        public async Task<object> Evaluate(string connectionId, string code)
         {
-            var evaluateRequest = new Request("evaluate");
-            evaluateRequest.Arguments.expression = expression;
-            evaluateRequest.Arguments.frame = 0;
-            //evaluateRequest.Arguments.global = true;
-            evaluateRequest.Arguments.disable_break = false;
-            evaluateRequest.Arguments.additional_context = new JArray();
-
-            var evalResponse = await m_debuggerClient.SendRequestAsync(evaluateRequest);
-
-            return evalResponse;
+            var scriptEngine = GetScriptEngineForConnection(connectionId);
+            var response = await scriptEngine.Evaluate(code);
+            return response;
         }
 
-        public object Evaluate(string connectionId, string expression)
+        public async Task<Response> EvalImmediate(string connectionId, string expression)
         {
-            var scriptName = GetCurrentScriptTargetName(connectionId);
-            var result = m_scriptEngine.Evaluate(scriptName, true, expression);
-            ResetConnectionToken(connectionId);
-            return result;
+            var scriptEngine = GetScriptEngineForConnection(connectionId);
+            var response = await scriptEngine.EvalImmediate(expression);
+            return response;
         }
 
-        private string GetCurrentScriptTargetName(string connectionId)
+
+        public void InitiateScriptEngine(string connectionId)
         {
-            return connectionId + "_" + GetConnectionToken(connectionId) + ".js";
+            var scriptEngine = GetScriptEngineForConnection(connectionId);
+            scriptEngine.BreakpointEvent += debuggerClient_BreakpointEvent;
+            scriptEngine.ExceptionEvent += debuggerClient_ExceptionEvent;
         }
 
-        private string GetConnectionToken(string connectionId)
+
+        public void RemoveScriptEngine(string connectionId)
         {
-            return m_connectionTokens.GetOrAdd(connectionId, id => TokenGenerator.GetUniqueKey(10));
+            V8DebugScriptEngine scriptEngine;
+            if (!m_connectionScriptEngines.TryRemove(connectionId, out scriptEngine))
+                return;
+
+            scriptEngine.BreakpointEvent -= debuggerClient_BreakpointEvent;
+            scriptEngine.ExceptionEvent -= debuggerClient_ExceptionEvent;
+            scriptEngine.Dispose();
         }
 
-        private string ResetConnectionToken(string connectionId)
+        public async Task<int> SetBreakpoint(string connectionId, Breakpoint breakpoint)
         {
-            return m_connectionTokens.AddOrUpdate(connectionId, id => TokenGenerator.GetUniqueKey(10), (id, currentToken) => TokenGenerator.GetUniqueKey(10));
+            var scriptEngine = GetScriptEngineForConnection(connectionId);
+            var breakpointNumber = await scriptEngine.SetBreakpoint(breakpoint);
+            return breakpointNumber;
         }
 
-        private async Task<Response> SetBreakpointInternal(string connectionId, Breakpoint breakpoint)
+        private V8DebugScriptEngine GetScriptEngineForConnection(string connectionId)
         {
-            var breakPointRequest = new Request("setbreakpoint");
+            var console = new FirebugConsole(Clients);
 
-            breakPointRequest.Arguments.type = "script";
-            breakPointRequest.Arguments.target = GetCurrentScriptTargetName(connectionId) + " [temp]";
-
-            breakPointRequest.Arguments.line = breakpoint.LineNumber;
-
-            if (breakpoint.Column.HasValue && breakpoint.Column > 0)
-                breakPointRequest.Arguments.column = breakpoint.Column.Value;
-
-            if (breakpoint.Enabled == false)
-                breakPointRequest.Arguments.enabled = false;
-
-            if (String.IsNullOrWhiteSpace(breakpoint.Condition) == false)
-                breakPointRequest.Arguments.condition = breakpoint.Condition;
-
-            if (breakpoint.IgnoreCount.HasValue && breakpoint.IgnoreCount > 0)
-                breakPointRequest.Arguments.ignoreCount = breakpoint.IgnoreCount.Value;
-
-            var breakPointResponse = await m_debuggerClient.SendRequestAsync(breakPointRequest);
-            return breakPointResponse;
+            return m_connectionScriptEngines.GetOrAdd(connectionId, id => new V8DebugScriptEngine(connectionId, console));
         }
 
-        void m_debuggerClient_BreakpointEvent(object sender, BreakpointEventArgs e)
+        private void debuggerClient_BreakpointEvent(object sender, BreakpointEventArgs e)
         {
+            //TODO: Change this to notify only the connection associatd with the script engine. (or that group?!)
             Clients.All.breakpointHit(e.BreakpointEvent);
         }
 
         private void debuggerClient_ExceptionEvent(object sender, ExceptionEventArgs e)
         {
+            //TODO Change this to notify only the connection associatd with the script engine.
             Clients.All.exception(e.ExceptionEvent);
         }
     }
