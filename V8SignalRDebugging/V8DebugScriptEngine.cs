@@ -117,6 +117,14 @@
             return evalResponse;
         }
 
+        public async Task<Response> GarbageCollect()
+        {
+            var gcRequest = new Request("gc");
+            var gcResponse = await m_debuggerClient.SendRequestAsync(gcRequest);
+
+            return gcResponse;
+        }
+
         public async Task<IList<Breakpoint>> ListBreakpoints()
         {
             var listBreakpointsRequest = new Request("listbreakpoints");
@@ -186,7 +194,19 @@
 
         private async Task ResetScriptEngine()
         {
+            //clear existing breakpoints.
+            var currentBreakpoints = await ListBreakpoints();
+
+            foreach (var breakpoint in currentBreakpoints)
+            {
+                await ClearBreakpoint(breakpoint.BreakPointNumber);
+            }
+
+            await GarbageCollect();
+
             m_currentScriptName = GetRandomScriptTargetName();
+
+            //Set breakpoints on new "instance"
             foreach (var breakpoint in m_breakpoints)
             {
                 await SetBreakpointInternal(breakpoint);
