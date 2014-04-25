@@ -11,6 +11,13 @@
         consoleMessages: []
     };
 
+    $scope.beginEval = function() {
+        $scope.model.isRunning = true;
+        $scope.model.result = null;
+        $scope.model.evalImmediateExpression = null;
+        $scope.model.consoleMessages = [];
+    };
+
     $scope.backtrace = function() {
         scriptEngine.backtrace();
     };
@@ -19,17 +26,17 @@
         scriptEngine.shareCode($scope.model.code);
     };
 
+    $scope.continueBreakpoint = function (type) {
+        scriptEngine.continueBreakpoint(type);
+    };
+
     $scope.disconnect = function () {
         scriptEngine.disconnect();
     };
 
     $scope.eval = function () {
         store.set("code", $scope.model.code);
-        $scope.model.isRunning = true;
-        $scope.model.result = null;
-        $scope.model.evalImmediateExpression = null;
-        $scope.model.consoleMessages = [];
-        scriptEngine.eval($scope.model.userName, $scope.model.code);
+        scriptEngine.eval($scope.model.code);
     };
 
     $scope.evalImmediate = function () {
@@ -40,15 +47,22 @@
         $scope.model.evalImmediate = null;
     };
 
+    $scope.interrupt = function() {
+        scriptEngine.interrupt();
+    };
 
     $scope.setBreakpoint = function () {
         scriptEngine.setBreakpoint($scope.model.newBreakpointLineNum);
         $scope.model.newBreakpointLineNum = null;
     };
 
-    $scope.continueBreakpoint = function (type) {
-        scriptEngine.continueBreakpoint(type);
-    };
+    $scope.$on("scriptEngineHub.backtrace", function (e, backtrace) {
+        $scope.model.backtrace = backtrace;
+    });
+
+    $scope.$on("scriptEngineHub.beginEval", function (e) {
+        $scope.beginEval();
+    });
 
     $scope.$on("scriptEngineHub.breakpointHit", function (e, obj) {
         $scope.model.currentBreakpoint = obj;
@@ -58,9 +72,8 @@
         $scope.model.breakpoints.push(obj);
     });
 
-    $scope.$on("scriptEngineHub.evalResult", function (e, userName, result) {
-        $scope.model.result = JSON.stringify(result, null, 4);
-        $scope.model.isRunning = false;
+    $scope.$on("scriptEngineHub.codeUpdated", function (e, code) {
+        $scope.model.code = code;
     });
 
     $scope.$on("scriptEngineHub.console", function (e, result) {
@@ -75,15 +88,17 @@
         else {
             $scope.model.consoleMessages.push({ date: new Date(), message: result.message });
         }
-        
+
     });
 
-    $scope.$on("scriptEngineHub.codeUpdated", function (e, code) {
-        $scope.model.code = code;
+    $scope.$on("scriptEngineHub.evalResult", function (e, result) {
+        $scope.model.result = JSON.stringify(result, null, 4);
+        $scope.model.isRunning = false;
     });
 
-    $scope.$on("scriptEngineHub.backtrace", function (e, backtrace) {
-        $scope.model.backtrace = backtrace;
+    $scope.$on("scriptEngineHub.interrupt", function (e, result) {
+        $scope.model.result = "*** Stopped before a result could be returned ***";
+        $scope.model.isRunning = false;
     });
 
     $scope.model.code = store.get("code");

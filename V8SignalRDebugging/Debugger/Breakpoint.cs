@@ -31,6 +31,12 @@
             set;
         }
 
+        public int? GroupId
+        {
+            get;
+            set;
+        }
+
         public bool Enabled
         {
             get;
@@ -44,6 +50,12 @@
         }
 
         public int? IgnoreCount
+        {
+            get;
+            set;
+        }
+
+        public int? HitCount
         {
             get;
             set;

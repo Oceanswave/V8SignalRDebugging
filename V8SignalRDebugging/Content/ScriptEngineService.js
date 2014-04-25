@@ -1,16 +1,15 @@
 ﻿v8SignalRApp.service('ScriptEngine', ['$rootScope', '$timeout', function ($rootScope, $timeout) {
     var scriptEngineHub = jQuery.connection.scriptEngineHub;
 
-    // Create a function that the hub can call to broadcast messages.
-    scriptEngineHub.client.addMessage = function (name, message) {
-        $timeout(function() {
-            $rootScope.$broadcast("scriptEngineHub.addMessage", name, message);
-        });
-    };
-
     scriptEngineHub.client.backtrace = function (backtrace) {
         $timeout(function () {
             $rootScope.$broadcast("scriptEngineHub.backtrace", backtrace);
+        });
+    };
+
+    scriptEngineHub.client.beginEval = function () {
+        $timeout(function () {
+            $rootScope.$broadcast("scriptEngineHub.beginEval");
         });
     };
 
@@ -32,21 +31,27 @@
         });
     };
 
-    scriptEngineHub.client.evalResult = function (name, result) {
+    scriptEngineHub.client.console = function (result) {
         $timeout(function () {
-            $rootScope.$broadcast("scriptEngineHub.evalResult", name, result);
-        });
-    };
-
-    scriptEngineHub.client.console = function (name, result) {
-        $timeout(function () {
-            $rootScope.$broadcast("scriptEngineHub.console", name, result);
+            $rootScope.$broadcast("scriptEngineHub.console", result);
         });
     };
 
     scriptEngineHub.client.codeUpdated = function (code) {
         $timeout(function () {
             $rootScope.$broadcast("scriptEngineHub.codeUpdated", code);
+        });
+    };
+
+    scriptEngineHub.client.evalResult = function (result) {
+        $timeout(function () {
+            $rootScope.$broadcast("scriptEngineHub.evalResult", result);
+        });
+    };
+
+    scriptEngineHub.client.interrupt = function () {
+        $timeout(function () {
+            $rootScope.$broadcast("scriptEngineHub.interrupt");
         });
     };
 
@@ -63,11 +68,14 @@
         disconnect: function() {
             scriptEngineHub.server.disconnect();
         },
-        eval: function (userName, code) {
-            scriptEngineHub.server.eval(userName, code);
+        eval: function (code) {
+            scriptEngineHub.server.eval(code);
         },
         evalImmediate: function (expression) {
             scriptEngineHub.server.evalImmediate(expression);
+        },
+        interrupt: function() {
+            scriptEngineHub.server.interrupt();
         },
         shareCode: function (code) {
             scriptEngineHub.server.shareCode(code);

@@ -63,6 +63,15 @@
             return backtraceResponse;
         }
 
+        public async Task<Response> ClearBreakpoint(int breakpointNumber)
+        {
+            var clearBreakpointRequest = new Request("clearbreakpoint");
+            clearBreakpointRequest.Arguments.breakpoint = breakpointNumber;
+
+            var clearBreakpointResponse = await m_debuggerClient.SendRequestAsync(clearBreakpointRequest);
+            return clearBreakpointResponse;
+        }
+
         public async Task<Response> Continue(StepAction stepAction = StepAction.Next, int? stepCount = null)
         {
             var continueRequest = new Request("continue");
@@ -89,11 +98,7 @@
         {
             var result = m_scriptEngine.Evaluate(m_currentScriptName, true, code);
 
-            m_currentScriptName = GetRandomScriptTargetName();
-            foreach (var breakpoint in m_breakpoints)
-            {
-                await SetBreakpointInternal(breakpoint);
-            }
+            await ResetScriptEngine();
 
             return result;
         }
@@ -110,6 +115,40 @@
             var evalResponse = await m_debuggerClient.SendRequestAsync(evaluateRequest);
 
             return evalResponse;
+        }
+
+        public async Task<IList<Breakpoint>> ListBreakpoints()
+        {
+            var listBreakpointsRequest = new Request("listbreakpoints");
+            var listBreakpointsResponse = await m_debuggerClient.SendRequestAsync(listBreakpointsRequest);
+
+            var breakpoints = new List<Breakpoint>();
+            foreach (var breakpoint in listBreakpointsResponse.Body.breakpoints)
+            {
+                if (breakpoint.script_name != m_currentScriptName + " [Temp]")
+                    continue;
+
+                var concreteBreakpoint = new Breakpoint
+                {
+                    BreakPointNumber = breakpoint.number,
+                    LineNumber = breakpoint.line,
+                    Column = breakpoint.column,
+                    GroupId = breakpoint.groupId,
+                    HitCount = breakpoint.hit_count,
+                    Enabled = breakpoint.active,
+                    IgnoreCount = breakpoint.ignoreCount
+                };
+                breakpoints.Add(concreteBreakpoint);
+            }
+
+            return breakpoints;
+        }
+
+        public async Task Interrupt()
+        {
+            m_scriptEngine.Interrupt();
+
+            await ResetScriptEngine();
         }
 
         public async Task<int> SetBreakpoint(Breakpoint breakpoint)
@@ -145,10 +184,19 @@
             return breakPointResponse;
         }
 
+        private async Task ResetScriptEngine()
+        {
+            m_currentScriptName = GetRandomScriptTargetName();
+            foreach (var breakpoint in m_breakpoints)
+            {
+                await SetBreakpointInternal(breakpoint);
+            }
+        }
+
         private void m_debuggerClient_BreakpointEvent(object sender, BreakpointEventArgs e)
         {
             if (ExceptionEvent != null)
-                ExceptionEvent(sender, new ExceptionEventArgs(e.BreakpointEvent));
+                BreakpointEvent(sender, new BreakpointEventArgs(e.BreakpointEvent));
 
         }
 

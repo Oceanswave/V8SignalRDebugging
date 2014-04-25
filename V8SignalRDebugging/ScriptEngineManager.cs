@@ -2,9 +2,6 @@
 {
     using Microsoft.AspNet.SignalR;
     using Microsoft.AspNet.SignalR.Hubs;
-    using Microsoft.ClearScript;
-    using Microsoft.ClearScript.V8;
-    using Newtonsoft.Json.Linq;
     using System;
     using System.Collections.Concurrent;
     using System.Threading.Tasks;
@@ -23,9 +20,7 @@
 
         public ScriptEngineManager(IHubConnectionContext hubConnectionContext)
         {
-            // TODO: Complete member initialization
             Clients = hubConnectionContext;
-            
         }
 
         public static ScriptEngineManager Instance
@@ -50,6 +45,13 @@
             return response;
         }
 
+        public async Task<Response> ClearBreakpoint(string connectionId, int breakpointNumber)
+        {
+            var scriptEngine = GetScriptEngineForConnection(connectionId);
+            var response = await scriptEngine.ClearBreakpoint(breakpointNumber);
+            return response;
+        }
+
         public async Task<Response> Continue(string connectionId, StepAction stepAction = StepAction.Next, int? stepCount = null)
         {
             var scriptEngine = GetScriptEngineForConnection(connectionId);
@@ -61,6 +63,15 @@
         {
             var scriptEngine = GetScriptEngineForConnection(connectionId);
             var response = await scriptEngine.Disconnect();
+
+            //For some reason, disconnect doesn't do what you think it does...
+            var breakpoints = await scriptEngine.ListBreakpoints();
+            foreach (var breakpoint in breakpoints)
+            {
+                await scriptEngine.ClearBreakpoint(breakpoint.BreakPointNumber);
+            }
+            await scriptEngine.Continue(StepAction.Out);
+
             return response;
         }
 
@@ -78,6 +89,20 @@
             return response;
         }
 
+        public async Task Interrupt(string connectionId)
+        {
+            var scriptEngine = GetScriptEngineForConnection(connectionId);
+            await scriptEngine.Interrupt();
+
+            //Ensure that the script engine isn't stopped at something.
+            var breakpoints = await scriptEngine.ListBreakpoints();
+            foreach (var breakpoint in breakpoints)
+            {
+                await scriptEngine.ClearBreakpoint(breakpoint.BreakPointNumber);
+            }
+            await scriptEngine.Continue(StepAction.Out);
+        }
+
 
         public void InitiateScriptEngine(string connectionId)
         {
@@ -85,7 +110,6 @@
             scriptEngine.BreakpointEvent += debuggerClient_BreakpointEvent;
             scriptEngine.ExceptionEvent += debuggerClient_ExceptionEvent;
         }
-
 
         public void RemoveScriptEngine(string connectionId)
         {
