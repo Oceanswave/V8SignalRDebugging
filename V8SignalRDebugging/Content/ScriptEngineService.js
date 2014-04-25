@@ -83,8 +83,21 @@
         send: function (userName, message) {
             scriptEngineHub.server.send(userName, message);
         },
-        setBreakpoint: function(lineNumber, column, enabled, condition, ignoreCount) {
-            scriptEngineHub.server.setBreakpoint(lineNumber);
+        setBreakpoint: function (lineNumber, column, enabled, condition, ignoreCount) {
+
+            if (angular.isUndefined(column))
+                column = null;
+
+            if (angular.isUndefined(enabled))
+                enabled = true;
+
+            if (angular.isUndefined(condition))
+                condition = null;
+
+            if (angular.isUndefined(ignoreCount))
+                ignoreCount = 0;
+
+            scriptEngineHub.server.setBreakpoint(lineNumber, column, enabled, condition, ignoreCount);
         }
     };
 }]);

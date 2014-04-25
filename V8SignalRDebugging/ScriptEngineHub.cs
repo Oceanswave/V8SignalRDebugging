@@ -1,5 +1,6 @@
 ﻿namespace V8SignalRDebugging
 {
+    using System.Diagnostics;
     using System.Threading.Tasks;
     using Microsoft.AspNet.SignalR;
     using V8SignalRDebugging.Debugger;
@@ -59,17 +60,27 @@
             Clients.All.interrupt();
         }
 
-        public async Task SetBreakpoint(int lineNumber)
+        public async Task SetBreakpoint(int lineNumber, int? column = null, bool enabled = true, string condition = null, int? ignoreCount = 0 )
         {
-            await m_scriptEngineManager.SetBreakpoint(Context.ConnectionId, new Breakpoint { LineNumber = lineNumber });
+            var bp = new Breakpoint
+            {
+                LineNumber = lineNumber,
+                Column = column,
+                Enabled = enabled,
+                Condition = condition,
+                IgnoreCount = ignoreCount
+            };
+            
+            var breakpointNumber = await m_scriptEngineManager.SetBreakpoint(Context.ConnectionId, bp);
 
             Clients.All.breakpointSet(new
             {
+                breakpointNumber,
                 lineNumber,
-                /*column = column,
-                enabled = enabled,
-                condition = condition,
-                ignoreCount = ignoreCount*/
+                column,
+                enabled,
+                condition,
+                ignoreCount
             });
         }
 

@@ -15,9 +15,28 @@
     <div data-ng-hide="model.isRunning">
         <div class="clearfix">
             Breakpoints:
-            <div data-ng-repeat="breakpoint in model.breakpoints">
-                {{breakpoint.lineNumber}}
-            </div>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Breakpoint Number</th>
+                        <th>Line Number</th>
+                        <th>Column Number</th>
+                        <th>Enabled</th>
+                        <th>Condition</th>
+                        <th>Ignore Count</th>
+                    </tr>
+                </thead>
+                <tbody data-ng-repeat="breakpoint in model.breakpoints">
+                    <tr>
+                        <td>{{breakpoint.breakpointNumber}}</td>
+                        <td>{{breakpoint.lineNumber}}</td>
+                        <td>{{breakpoint.columnNumber}}</td>
+                        <td>{{breakpoint.enabled}}</td>
+                        <td>{{breakpoint.condition}}</td>
+                        <td>{{breakpoint.ignoreCount}}</td>
+                    </tr>
+                </tbody>
+            </table>
             <div>
                 New Breakpoint:
                 <input type="text" data-ng-model="model.newBreakpointLineNum" />
