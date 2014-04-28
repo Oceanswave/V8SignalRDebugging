@@ -111,6 +111,13 @@
             scriptEngine.ExceptionEvent += debuggerClient_ExceptionEvent;
         }
 
+        public async Task<Response> Lookup(string connectionId, bool includeSource = false, params int[] handles)
+        {
+            var scriptEngine = GetScriptEngineForConnection(connectionId);
+            var objects = await scriptEngine.Lookup(includeSource, handles);
+            return objects;
+        }
+
         public void RemoveScriptEngine(string connectionId)
         {
             V8DebugScriptEngine scriptEngine;
@@ -120,6 +127,20 @@
             scriptEngine.BreakpointEvent -= debuggerClient_BreakpointEvent;
             scriptEngine.ExceptionEvent -= debuggerClient_ExceptionEvent;
             scriptEngine.Dispose();
+        }
+
+        public async Task<Response> Scope(string connectionId, int scopeNumber, int? frameNumber = null)
+        {
+            var scriptEngine = GetScriptEngineForConnection(connectionId);
+            var scope = await scriptEngine.Scope(scopeNumber, frameNumber);
+            return scope;
+        }
+
+        public async Task<Response> Scopes(string connectionId, int? frameNumber = null)
+        {
+            var scriptEngine = GetScriptEngineForConnection(connectionId);
+            var scopes = await scriptEngine.Scopes(frameNumber);
+            return scopes;
         }
 
         public async Task<int> SetBreakpoint(string connectionId, Breakpoint breakpoint)

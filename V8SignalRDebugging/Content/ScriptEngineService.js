@@ -55,6 +55,18 @@
         });
     };
 
+    scriptEngineHub.client.scope = function (result) {
+        $timeout(function () {
+            $rootScope.$broadcast("scriptEngineHub.scope", result);
+        });
+    };
+
+    scriptEngineHub.client.scopes = function (result) {
+        $timeout(function () {
+            $rootScope.$broadcast("scriptEngineHub.scopes", result);
+        });
+    };
+
     return {
         backtrace: function () {
             scriptEngineHub.server.backtrace();
@@ -76,6 +88,20 @@
         },
         interrupt: function() {
             scriptEngineHub.server.interrupt();
+        },
+        scope: function (scopeNumber, frameNumber) {
+
+            if (angular.isUndefined(frameNumber))
+                frameNumber = null;
+
+            scriptEngineHub.server.scope(scopeNumber, frameNumber);
+        },
+        scopes: function (frameNumber) {
+
+            if (angular.isUndefined(frameNumber))
+                frameNumber = null;
+
+            scriptEngineHub.server.scopes(frameNumber);
         },
         shareCode: function (code) {
             scriptEngineHub.server.shareCode(code);

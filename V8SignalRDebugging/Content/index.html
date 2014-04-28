@@ -67,10 +67,12 @@
             </div>
             <div data-tab="">
                 <div data-tab-heading="">
-                    <i class="glyphicon glyphicon-list-alt"></i> Stacktrace
+                    <i class="glyphicon glyphicon-list-alt"></i> Call Stack
                 </div>
-                <div class="btn btn-default" data-ng-click="backtrace()"></div>
+                <div class="btn btn-default" data-ng-click="backtrace()">Backtrace</div>
                 {{model.backtrace}}
+                <div class="btn btn-default" data-ng-click="scopes()">Scope</div>
+                {{model.scopes}}
             </div>
             <div data-tab="">
                 <div data-tab-heading="">

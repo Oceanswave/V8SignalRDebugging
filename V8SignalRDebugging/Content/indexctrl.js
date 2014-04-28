@@ -51,6 +51,10 @@
         scriptEngine.interrupt();
     };
 
+    $scope.scopes = function () {
+        scriptEngine.scopes();
+    };
+
     $scope.setBreakpoint = function () {
         scriptEngine.setBreakpoint($scope.model.newBreakpointLineNum);
         $scope.model.newBreakpointLineNum = null;
@@ -99,6 +103,10 @@
     $scope.$on("scriptEngineHub.interrupt", function (e, result) {
         $scope.model.result = "*** Stopped before a result could be returned ***";
         $scope.model.isRunning = false;
+    });
+
+    $scope.$on("scriptEngineHub.scopes", function (e, scopes) {
+        $scope.model.scopes = scopes;
     });
 
     $scope.model.code = store.get("code");

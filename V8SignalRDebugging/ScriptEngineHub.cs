@@ -1,6 +1,5 @@
 ﻿namespace V8SignalRDebugging
 {
-    using System.Diagnostics;
     using System.Threading.Tasks;
     using Microsoft.AspNet.SignalR;
     using V8SignalRDebugging.Debugger;
@@ -58,6 +57,18 @@
         {
             await m_scriptEngineManager.Interrupt(Context.ConnectionId);
             Clients.All.interrupt();
+        }
+
+        public async Task Scope(int scopeNumber, int? frameNumber = null)
+        {
+            var scope = await m_scriptEngineManager.Scope(Context.ConnectionId, scopeNumber, frameNumber);
+            Clients.All.scope(scope);
+        }
+
+        public async Task Scopes(int? frameNumber = null)
+        {
+            var scopes = await m_scriptEngineManager.Scopes(Context.ConnectionId, frameNumber);
+            Clients.All.scopes(scopes);
         }
 
         public async Task SetBreakpoint(int lineNumber, int? column = null, bool enabled = true, string condition = null, int? ignoreCount = 0 )

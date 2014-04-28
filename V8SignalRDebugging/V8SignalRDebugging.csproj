@@ -85,6 +85,8 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Debugger\Scope.cs" />
+    <Compile Include="Debugger\ScopeType.cs" />
     <Compile Include="FirebugConsole.cs" />
     <Compile Include="Debugger\Breakpoint.cs" />
     <Compile Include="Debugger\Messages\Event.cs" />
