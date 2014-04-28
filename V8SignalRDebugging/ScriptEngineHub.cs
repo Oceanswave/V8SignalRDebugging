@@ -4,6 +4,9 @@
     using Microsoft.AspNet.SignalR;
     using V8SignalRDebugging.Debugger;
 
+    /// <summary>
+    /// SignalR hub for interacting with the script engine.
+    /// </summary>
     public class ScriptEngineHub : Hub
     {
         private readonly ScriptEngineManager m_scriptEngineManager;

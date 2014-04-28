@@ -9,6 +9,9 @@
     using V8SignalRDebugging.Debugger.Events;
     using V8SignalRDebugging.Debugger.Messages;
 
+    /// <summary>
+    /// Manages Script Engine Instances -- currently, each connection gets a script engine instance which is disposed of on disconnect.
+    /// </summary>
     public class ScriptEngineManager
     {
         // Singleton instance
