@@ -62,10 +62,10 @@
             Clients.All.interrupt();
         }
 
-        public async Task Scope(int scopeNumber, int? frameNumber = null)
+        public async Task GetScopeVariables(int? scopeNumber = null, int? frameNumber = null)
         {
-            var scope = await m_scriptEngineManager.Scope(Context.ConnectionId, scopeNumber, frameNumber);
-            Clients.All.scope(scope);
+            var scopeVariables = await m_scriptEngineManager.GetScopeVariables(Context.ConnectionId, scopeNumber, frameNumber);
+            Clients.All.scopeVariables(scopeNumber, frameNumber, scopeVariables);
         }
 
         public async Task Scopes(int? frameNumber = null)

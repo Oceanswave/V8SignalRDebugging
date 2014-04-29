@@ -85,8 +85,10 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Debugger\Messages\ResponseExtensions.cs" />
     <Compile Include="Debugger\Scope.cs" />
     <Compile Include="Debugger\ScopeType.cs" />
+    <Compile Include="Debugger\ScriptType.cs" />
     <Compile Include="FirebugConsole.cs" />
     <Compile Include="Debugger\Breakpoint.cs" />
     <Compile Include="Debugger\Messages\Event.cs" />
@@ -114,7 +116,7 @@
     <Compile Include="ScriptEngineManager.cs" />
     <Compile Include="Startup.cs" />
     <Compile Include="TokenGenerator.cs" />
-    <Compile Include="V8DebugScriptEngine.cs" />
+    <Compile Include="Debugger\V8DebugScriptEngine.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

@@ -1,17 +1,25 @@
 ﻿namespace V8SignalRDebugging
 {
+    using System.Collections.Generic;
+    using System.Dynamic;
+    using System.Globalization;
     using Microsoft.AspNet.SignalR;
     using Microsoft.AspNet.SignalR.Hubs;
     using System;
     using System.Collections.Concurrent;
+    using System.Linq;
     using System.Threading.Tasks;
+    using Newtonsoft.Json.Linq;
     using V8SignalRDebugging.Debugger;
     using V8SignalRDebugging.Debugger.Events;
     using V8SignalRDebugging.Debugger.Messages;
 
     /// <summary>
-    /// Manages Script Engine Instances -- currently, each connection gets a script engine instance which is disposed of on disconnect.
+    /// Manages Script Engine Instances and performs higher-level operations.
     /// </summary>
+    /// <remarks>
+    /// Currently, each connection gets a script engine instance which is disposed of on disconnect.
+    /// </remarks>
     public class ScriptEngineManager
     {
         // Singleton instance
@@ -68,8 +76,8 @@
             var response = await scriptEngine.Disconnect();
 
             //For some reason, disconnect doesn't do what you think it does...
-            var breakpoints = await scriptEngine.ListBreakpoints();
-            foreach (var breakpoint in breakpoints)
+            var breakpointResponse = await scriptEngine.ListAllBreakpoints();
+            foreach (var breakpoint in breakpointResponse.GetBreakpoints().Where(bp => bp.ScriptName == scriptEngine.CurrentScriptName))
             {
                 await scriptEngine.ClearBreakpoint(breakpoint.BreakPointNumber);
             }
@@ -98,14 +106,13 @@
             await scriptEngine.Interrupt();
 
             //Ensure that the script engine isn't stopped at something.
-            var breakpoints = await scriptEngine.ListBreakpoints();
-            foreach (var breakpoint in breakpoints)
+            var breakpoints = await scriptEngine.ListAllBreakpoints();
+            foreach (var breakpoint in breakpoints.GetBreakpoints().Where(bp => bp.ScriptName == scriptEngine.CurrentScriptName))
             {
                 await scriptEngine.ClearBreakpoint(breakpoint.BreakPointNumber);
             }
             await scriptEngine.Continue(StepAction.Out);
         }
-
 
         public void InitiateScriptEngine(string connectionId)
         {
@@ -132,25 +139,45 @@
             scriptEngine.Dispose();
         }
 
-        public async Task<Response> Scope(string connectionId, int scopeNumber, int? frameNumber = null)
+        public async Task<dynamic> GetScopeVariables(string connectionId, int? scopeNumber = null, int? frameNumber = null)
         {
             var scriptEngine = GetScriptEngineForConnection(connectionId);
-            var scope = await scriptEngine.Scope(scopeNumber, frameNumber);
-            return scope;
+
+            if (scopeNumber.HasValue == false)
+            {
+                var scopes = await scriptEngine.Scopes(frameNumber);
+                var typedScopes = scopes.GetScopes().ToList();
+                foreach (var typedScope in typedScopes)
+                {
+                    typedScope.Object = await GetLocalsFromScopeObject(scriptEngine, typedScope.Object);
+                }
+                return typedScopes;
+            }
+
+            var response = await scriptEngine.Scope(scopeNumber.Value, frameNumber);
+            var scope = response.GetScope();
+
+            var result = await GetLocalsFromScopeObject(scriptEngine, scope.Object);
+            return result;
         }
 
-        public async Task<Response> Scopes(string connectionId, int? frameNumber = null)
+        public async Task<IList<Scope>> Scopes(string connectionId, int? frameNumber = null)
         {
             var scriptEngine = GetScriptEngineForConnection(connectionId);
             var scopes = await scriptEngine.Scopes(frameNumber);
-            return scopes;
+            var typedScopes = scopes.GetScopes().ToList();
+            foreach (var scope in typedScopes)
+            {
+                scope.Object = await GetLocalsFromScopeObject(scriptEngine, scope.Object);
+            }
+            return typedScopes;
         }
 
         public async Task<int> SetBreakpoint(string connectionId, Breakpoint breakpoint)
         {
             var scriptEngine = GetScriptEngineForConnection(connectionId);
-            var breakpointNumber = await scriptEngine.SetBreakpoint(breakpoint);
-            return breakpointNumber;
+            var response = await scriptEngine.SetBreakpoint(breakpoint);
+            return response.Body.breakpoint;
         }
 
         private V8DebugScriptEngine GetScriptEngineForConnection(string connectionId)
@@ -158,6 +185,36 @@
             var console = new FirebugConsole(Clients);
 
             return m_connectionScriptEngines.GetOrAdd(connectionId, id => new V8DebugScriptEngine(connectionId, console));
+        }
+
+        private async Task<dynamic> GetLocalsFromScopeObject(V8DebugScriptEngine engine, dynamic obj)
+        {
+            var dict = obj as IDictionary<string, JToken>;
+            if (dict == null || dict.ContainsKey("ref") == false)
+                return obj;
+
+            var handle = dict["ref"].Value<int>();
+            var result = await engine.Lookup(false, handle);
+
+            var lookupObj = result.Body[handle.ToString(CultureInfo.InvariantCulture)];
+            var lookupObjectDict = lookupObj as IDictionary<string, JToken>;
+            if (lookupObjectDict == null || lookupObjectDict.ContainsKey("properties") == false)
+                return lookupObj;
+
+            dynamic properties = new ExpandoObject();
+            foreach (var property in lookupObj.properties)
+            {
+                if (property.attributes != 4)
+                    continue;
+
+                //Capturing name here -- possibly the value gets disposed in the next await?
+                string name = property.name;
+                
+                var propertyValue = await GetLocalsFromScopeObject(engine, property);
+                ((IDictionary<string, object>)properties).Add(name, propertyValue);
+            }
+
+            return properties;
         }
 
         private void debuggerClient_BreakpointEvent(object sender, BreakpointEventArgs e)

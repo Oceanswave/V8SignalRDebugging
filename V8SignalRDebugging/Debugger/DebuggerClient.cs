@@ -33,8 +33,8 @@
         /// <summary>
         /// Sends a request and returns a response.
         /// </summary>
-        /// <param name="request">Command.</param>
-        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <param name="request">Command</param>
+        /// <param name="cancellationToken">Cancellation token</param>
         public async Task<Response> SendRequestAsync(Request request, CancellationToken cancellationToken = new CancellationToken())
         {
             cancellationToken.ThrowIfCancellationRequested();

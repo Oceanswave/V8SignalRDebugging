@@ -55,9 +55,9 @@
         });
     };
 
-    scriptEngineHub.client.scope = function (result) {
+    scriptEngineHub.client.scopeVariables = function (scopeNumber, frameNumber, scopeVariables) {
         $timeout(function () {
-            $rootScope.$broadcast("scriptEngineHub.scope", result);
+            $rootScope.$broadcast("scriptEngineHub.scopeVariables", scopeNumber, frameNumber, scopeVariables);
         });
     };
 
@@ -89,12 +89,15 @@
         interrupt: function() {
             scriptEngineHub.server.interrupt();
         },
-        scope: function (scopeNumber, frameNumber) {
+        getScopeVariables: function (scopeNumber, frameNumber) {
+
+            if (angular.isUndefined(scopeNumber))
+                scopeNumber = null;
 
             if (angular.isUndefined(frameNumber))
                 frameNumber = null;
 
-            scriptEngineHub.server.scope(scopeNumber, frameNumber);
+            scriptEngineHub.server.getScopeVariables(scopeNumber, frameNumber);
         },
         scopes: function (frameNumber) {
 

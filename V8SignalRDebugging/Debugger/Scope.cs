@@ -1,5 +1,7 @@
 ﻿namespace V8SignalRDebugging.Debugger
 {
+    using Newtonsoft.Json;
+
     public class Scope
     {
         /// <summary>
@@ -8,6 +10,7 @@
         /// <remarks>
         /// Index 0 is the top scope and the global scope will always have the highest index for a frame.
         /// </remarks>
+        [JsonProperty("index")]
         public int Index
         {
             get;
@@ -17,6 +20,7 @@
         /// <summary>
         /// Index of the Frame
         /// </summary>
+        [JsonProperty("frameIndex")]
         public int FrameIndex
         {
             get;
@@ -26,6 +30,7 @@
         /// <summary>
         /// The type of the scope
         /// </summary>
+        [JsonProperty("type")]
         public ScopeType Type
         {
             get;
@@ -38,6 +43,7 @@
         /// <remarks>
         /// For local and closure scopes this is transient objects, which has a negative handle value
         /// </remarks>
+        [JsonProperty("object")]
         public dynamic Object
         {
             get;

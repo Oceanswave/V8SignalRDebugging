@@ -1,12 +1,12 @@
-﻿namespace V8SignalRDebugging
+﻿namespace V8SignalRDebugging.Debugger
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Net;
     using System.Threading.Tasks;
     using Microsoft.ClearScript.V8;
     using Newtonsoft.Json.Linq;
-    using V8SignalRDebugging.Debugger;
     using V8SignalRDebugging.Debugger.Events;
     using V8SignalRDebugging.Debugger.Messages;
 
@@ -56,6 +56,17 @@
         }
 
         /// <summary>
+        /// Gets the name of the current script (valid between calls to Eval())
+        /// </summary>
+        public string CurrentScriptName
+        {
+            get
+            {
+                return m_currentScriptName + " [temp]";
+            }
+        }
+
+        /// <summary>
         /// The request backtrace returns a backtrace (or stacktrace) from the current execution state.
         /// </summary>
         /// <remarks>
@@ -81,7 +92,6 @@
             }
 
             var backtraceResponse = await m_debuggerClient.SendRequestAsync(backtrace);
-
             return backtraceResponse;
         }
 
@@ -134,7 +144,6 @@
         {
             var continueRequest = new Request("continue");
 
-            //TODO: Set these two 
             continueRequest.Arguments.stepaction = stepAction.ToString().ToLowerInvariant();
 
             if (stepCount.HasValue && stepCount.Value > 1)
@@ -154,17 +163,24 @@
         public async Task<Response> Disconnect()
         {
             var disconnectRequest = new Request("disconnect");
-            var disconnectResponse = await m_debuggerClient.SendRequestAsync(disconnectRequest);
 
+            var disconnectResponse = await m_debuggerClient.SendRequestAsync(disconnectRequest);
             return disconnectResponse;
         }
 
+        /// <summary>
+        /// Evaluates the specified code.
+        /// </summary>
+        /// <remarks>
+        /// Subsequent calls to eval will use a different script name.
+        /// </remarks>
+        /// <param name="code"></param>
+        /// <returns></returns>
         public async Task<object> Evaluate(string code)
         {
             var result = m_scriptEngine.Evaluate(m_currentScriptName, true, code);
 
             await ResetScriptEngine();
-
             return result;
         }
 
@@ -210,8 +226,8 @@
         public async Task<Response> GarbageCollect()
         {
             var gcRequest = new Request("gc");
-            var gcResponse = await m_debuggerClient.SendRequestAsync(gcRequest);
 
+            var gcResponse = await m_debuggerClient.SendRequestAsync(gcRequest);
             return gcResponse;
         }
 
@@ -219,31 +235,12 @@
         /// The request listbreakpoints is used to get information on breakpoints that may have been set by the debugger.
         /// </summary>
         /// <returns></returns>
-        public async Task<IList<Breakpoint>> ListBreakpoints()
+        public async Task<Response> ListAllBreakpoints()
         {
             var listBreakpointsRequest = new Request("listbreakpoints");
+
             var listBreakpointsResponse = await m_debuggerClient.SendRequestAsync(listBreakpointsRequest);
-
-            var breakpoints = new List<Breakpoint>();
-            foreach (var breakpoint in listBreakpointsResponse.Body.breakpoints)
-            {
-                if (breakpoint.script_name != m_currentScriptName + " [Temp]")
-                    continue;
-
-                var concreteBreakpoint = new Breakpoint
-                {
-                    BreakPointNumber = breakpoint.number,
-                    LineNumber = breakpoint.line,
-                    Column = breakpoint.column,
-                    GroupId = breakpoint.groupId,
-                    HitCount = breakpoint.hit_count,
-                    Enabled = breakpoint.active,
-                    IgnoreCount = breakpoint.ignoreCount
-                };
-                breakpoints.Add(concreteBreakpoint);
-            }
-
-            return breakpoints;
+            return listBreakpointsResponse;
         }
 
         /// <summary>
@@ -310,7 +307,74 @@
             return response;
         }
 
-        //TODO: Source, Scripts
+        /// <summary>
+        /// The request scripts retrieves active scripts from the VM.
+        /// </summary>
+        /// <remarks>
+        /// An active script is source code from which there is still live objects in the VM. This request will always force a full garbage collection in the VM.
+        /// </remarks>
+        /// <param name="types">types of scripts to retrieve</param>
+        /// <param name="ids">array of id's of scripts to return. If this is not specified all scripts are requrned</param>
+        /// <param name="includeSource">boolean indicating whether the source code should be included for the scripts returned</param>
+        /// <param name="filter">filter string or script id.</param>
+        /// <returns></returns>
+        public async Task<Response> Scripts(ScriptType? types = null, int[] ids = null, bool includeSource = false,
+            string filter = null)
+        {
+            var scriptsRequest = new Request("scripts");
+
+            if (types.HasValue)
+                scriptsRequest.Arguments.types = (byte)types.Value;
+
+            if (ids != null && ids.Length > 0)
+                scriptsRequest.Arguments.ids = ids;
+
+            if (includeSource)
+                scriptsRequest.Arguments.includeSource = true;
+
+            if (String.IsNullOrWhiteSpace(filter) == false)
+            {
+                int scriptNumber;
+                if (int.TryParse(filter, out scriptNumber))
+                    scriptsRequest.Arguments.filter = scriptNumber;
+                else
+                    scriptsRequest.Arguments.filter = filter;
+            }
+            
+
+            var response = await m_debuggerClient.SendRequestAsync(scriptsRequest);
+            return response;
+        }
+
+        /// <summary>
+        /// The request source retrieves source code for a frame.
+        /// </summary>
+        /// <remarks>
+        /// It returns a number of source lines running from the fromLine to but not including the toLine,
+        /// that is the interval is open on the "to" end. For example,
+        /// requesting source from line 2 to 4 returns two lines (2 and 3).
+        /// Also note that the line numbers are 0 based: the first line is line 0.
+        /// </remarks>
+        /// <param name="frameNumber">frame number (default selected frame)</param>
+        /// <param name="fromLine">from line within the source default is line 0</param>
+        /// <param name="toLine">to line within the source this line is not included in the result default is the number of lines in the script</param>
+        /// <returns></returns>
+        public async Task<Response> Source(int? frameNumber = null, int? fromLine = null, int? toLine = null)
+        {
+            var sourceRequest = new Request("source");
+
+            if (frameNumber.HasValue)
+                sourceRequest.Arguments.frame = frameNumber.Value;
+
+            if (fromLine.HasValue)
+                sourceRequest.Arguments.fromLine = fromLine.Value;
+
+            if (toLine.HasValue)
+                sourceRequest.Arguments.toLine = toLine.Value;
+
+            var response = await m_debuggerClient.SendRequestAsync(sourceRequest);
+            return response;
+        }
 
         /// <summary>
         /// The request setbreakpoint creates a new break point.
@@ -320,12 +384,12 @@
         /// </remarks>
         /// <param name="breakpoint"></param>
         /// <returns></returns>
-        public async Task<int> SetBreakpoint(Breakpoint breakpoint)
+        public async Task<dynamic> SetBreakpoint(Breakpoint breakpoint)
         {
             m_breakpoints.Add(breakpoint);
 
             var response = await SetBreakpointInternal(breakpoint);
-            return response.Body.breakpoint;
+            return response;
         }
 
         private async Task<Response> SetBreakpointInternal(Breakpoint breakpoint)
@@ -333,7 +397,7 @@
             var breakPointRequest = new Request("setbreakpoint");
 
             breakPointRequest.Arguments.type = "script";
-            breakPointRequest.Arguments.target = m_currentScriptName + " [temp]";
+            breakPointRequest.Arguments.target = CurrentScriptName;
 
             breakPointRequest.Arguments.line = breakpoint.LineNumber;
 
@@ -356,9 +420,9 @@
         private async Task ResetScriptEngine()
         {
             //clear existing breakpoints.
-            var currentBreakpoints = await ListBreakpoints();
+            var currentBreakpoints = await ListAllBreakpoints();
 
-            foreach (var breakpoint in currentBreakpoints)
+            foreach (var breakpoint in currentBreakpoints.GetBreakpoints().Where(bp => bp.ScriptName == CurrentScriptName))
             {
                 await ClearBreakpoint(breakpoint.BreakPointNumber);
             }
@@ -378,7 +442,6 @@
         {
             if (ExceptionEvent != null)
                 BreakpointEvent(sender, new BreakpointEventArgs(e.BreakpointEvent));
-
         }
 
         private void debuggerClient_ExceptionEvent(object sender, ExceptionEventArgs e)

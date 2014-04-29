@@ -71,8 +71,16 @@
                 </div>
                 <div class="btn btn-default" data-ng-click="backtrace()">Backtrace</div>
                 {{model.backtrace}}
-                <div class="btn btn-default" data-ng-click="scopes()">Scope</div>
-                {{model.scopes}}
+                <div>
+                    <div class="panel panel-default" data-ng-repeat="scope in model.scopeVariables">
+                        <div class="panel-body">
+                            <dl class="dl-horizontal">
+                                <dt data-ng-repeat-start="(key, value) in scope.object">{{key}}</dt>
+                                <dd data-ng-repeat-end="">{{getFormattedObject(value)}}</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div data-tab="">
                 <div data-tab-heading="">

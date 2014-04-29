@@ -51,8 +51,17 @@
         scriptEngine.interrupt();
     };
 
-    $scope.scopes = function () {
-        scriptEngine.scopes();
+    $scope.getScopeVariables = function () {
+        scriptEngine.getScopeVariables();
+    };
+
+    $scope.getFormattedObject = function(obj) {
+        if (obj.type == "object") {
+            var stringResult = JSON.stringify(obj.value, null, 4);
+            return stringResult;
+        } else {
+            return obj.text;
+        }
     };
 
     $scope.setBreakpoint = function () {
@@ -70,6 +79,7 @@
 
     $scope.$on("scriptEngineHub.breakpointHit", function (e, obj) {
         $scope.model.currentBreakpoint = obj;
+        $scope.getScopeVariables();
     });
 
     $scope.$on("scriptEngineHub.breakpointSet", function (e, obj) {
@@ -105,8 +115,8 @@
         $scope.model.isRunning = false;
     });
 
-    $scope.$on("scriptEngineHub.scopes", function (e, scopes) {
-        $scope.model.scopes = scopes;
+    $scope.$on("scriptEngineHub.scopeVariables", function (e, scopeNumber, frameNumber, scopeVariables) {
+        $scope.model.scopeVariables = scopeVariables;
     });
 
     $scope.model.code = store.get("code");
