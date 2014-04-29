@@ -386,9 +386,11 @@
         /// <returns></returns>
         public async Task<dynamic> SetBreakpoint(Breakpoint breakpoint)
         {
-            m_breakpoints.Add(breakpoint);
-
             var response = await SetBreakpointInternal(breakpoint);
+            
+            if (response.Success)
+                m_breakpoints.Add(breakpoint);
+
             return response;
         }
 
