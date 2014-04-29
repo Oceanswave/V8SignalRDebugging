@@ -34,6 +34,9 @@
             Clients = hubConnectionContext;
         }
 
+        /// <summary>
+        /// Gets the instance of the script engine manager.
+        /// </summary>
         public static ScriptEngineManager Instance
         {
             get
@@ -42,6 +45,9 @@
             }
         }
 
+        /// <summary>
+        /// Gets or sets the context associated with the script engine manager.
+        /// </summary>
         private IHubConnectionContext Clients
         {
             get;

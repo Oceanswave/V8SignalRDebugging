@@ -98,6 +98,8 @@
             } else {
                 $scope.model.consoleMessages.push({ date: new Date(), message: result.body.text });
             }
+
+            $scope.getScopeVariables();
         }
         else {
             $scope.model.consoleMessages.push({ date: new Date(), message: result.message });
