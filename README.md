@@ -35,5 +35,5 @@ This is just a demonstration, feel free to fork away!
 Roadmap:
 -------
 
-+Make the code editor CodeMirror or Ace Editor based
-+Add ability to look at frames and so forth.
++ Make the code editor CodeMirror or Ace Editor based
++ Add ability to look at frames and so forth.
